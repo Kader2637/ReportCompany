@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ESG Report – Quest</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="color-scheme" content="light">
+  <style>
+    :root{
+      --bg:#f6f8fb; --card:#ffffff; --border:#e6e8ee; --muted:#6b7280;
+      --ink:#0f172a; --ink-2:#334155;
+      --brand:#1d4ed8; --brand-600:#1d4ed8; --brand-700:#1e40af; --brand-50:#eff6ff; --brand-100:#dbeafe;
+      --ring:#93c5fd;
+    }
+    html,body{background:var(--bg); color:var(--ink);}
+    .glass{background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.78)); backdrop-filter:saturate(1.15) blur(8px);}
+    .card{border:1px solid var(--border); background:var(--card); border-radius:20px;}
+    .soft-shadow{ box-shadow: 0 2px 8px rgba(16, 24, 40, .04), 0 16px 32px rgba(2, 6, 23, .06);}
+    :focus-visible{ outline:3px solid var(--brand); outline-offset:2px; border-radius:.6rem; }
+    .badge{ display:inline-flex; align-items:center; gap:.35rem; padding:.3rem .6rem; font-size:.72rem; border-radius:9999px; border-width:1px; white-space:nowrap;}
+    .timeline:before{ content:""; position:absolute; left:1.05rem; top:0; bottom:0; width:2px; background:#e5e7eb; }
+    tr[role="button"]:hover{ background: rgba(2,6,23,.035); }
+    .file-icon{ inline-size:38px; block-size:48px; border-radius:.75rem; display:inline-flex; align-items:center; justify-content:center; border:1px solid #e5e7eb; background:var(--card); }
+    .locked{ opacity:.6; filter:grayscale(20%); }
+    .nav-link{ padding:.5rem .75rem; border-radius:10px; }
+    .nav-active{ background:var(--brand-50); color:var(--brand-700); }
+    .btn{ display:inline-flex; align-items:center; gap:.5rem; border-radius:12px; font-weight:600; }
+    .btn-primary{ background:var(--brand-600); color:#fff; padding:.6rem 1rem; }
+    .btn-primary:hover{ background:var(--brand-700); }
+    .btn-ghost{ border:1px solid var(--border); background:#fff; padding:.6rem 1rem; }
+  </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+  <!-- ===================== DATA DUMMY (lebih banyak) ===================== -->
+  <script>
+    // status per approval: "ACC" | "Pending" | "Ditolak"
+    // Reason bisa teks atau gambar (reasonImage)
+    const DATA = {
+      companies: [
+        /* --------------------------- PT Alpha Energi --------------------------- */
+        {
+          id: "comp-a",
+          name: "PT Alpha Energi",
+          sector: "Energi Terbarukan",
+          location: "Jakarta",
+          quality: { employees: 82, company: 88 },
+          projects: [
+            {
+              id: "proj-1",
+              name: "Laporan Keberlanjutan 2025",
+              admin: "Gery",
+              esg: { sosial: true, lingkungan: true, tataKelola: true },
+              createdAt: "2025-01-10",
+              updatedAt: "2025-03-02",
+              deadline: "2025-03-01",
+              team: [
+                { name: "Gery Pratama", role: "Admin/Owner" },
+                { name: "Rina Maharani", role: "Analis ESG" },
+                { name: "Budi Santoso", role: "Data Engineer" },
+                { name: "Nadia Putri", role: "QA" },
+              ],
+              attachments: [
+                { name: "draft-v1.pdf", url: "#", type:"pdf", size:"1.2 MB" },
+                { name: "lampiran-emisi.xlsx", url: "#", type:"xlsx", size:"540 KB" },
+                { name: "kebijakan-lingkungan.pdf", url: "#", type:"pdf", size:"880 KB" },
+              ],
+              gallery: [
+                { alt: "Instalasi panel surya - atap pabrik", url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='400'><rect width='100%' height='100%' fill='%23eef2ff'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23636bfb' font-size='20'>Foto Panel Surya</text></svg>" },
+                { alt: "Tim audit lapangan", url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='400'><rect width='100%' height='100%' fill='%23ecfeff'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23089' font-size='20'>Foto Tim Audit</text></svg>" },
+              ],
+              timeline: [
+                {
+                  date: "2025-01-10",
+                  actor: "Gery Pratama",
+                  action: "Membuat draft awal",
+                  approvals: [
+                    { role: "Pemerintah",       status: "Pending", date: null, reason: "" },
+                    { role: "Dewan Komisaris",  status: "Pending", date: null, reason: "" },
+                    { role: "Investor",         status: "Pending", date: null, reason: "" },
+                    { role: "Auditor",          status: "Pending", date: null, reason: "" }
+                  ]
+                },
+                {
+                  date: "2025-01-20",
+                  actor: "Gery Pratama",
+                  action: "Submit untuk review",
+                  approvals: [
+                    { role: "Pemerintah",       status: "ACC",     date: "2025-02-20", reason: "Memenuhi regulasi." },
+                    { role: "Dewan Komisaris",  status: "ACC",     date: "2025-02-22", reason: "Transparansi memadai." },
+                    { role: "Investor",         status: "Pending", date: null,          reason: "" },
+                    { role: "Auditor",          status: "ACC",     date: "2025-02-25", reason: "Angka konsisten." }
+                  ]
+                },
+                {
+                  date: "2025-02-15",
+                  actor: "Nadia Putri",
+                  action: "QA & resubmit final",
+                  approvals: [
+                    { role: "Pemerintah",       status: "ACC",     date: "2025-02-26", reason: "Final OK." },
+                    { role: "Dewan Komisaris",  status: "ACC",     date: "2025-02-26", reason: "OK." },
+                    { role: "Investor",         status: "Pending", date: null,          reason: "" },
+                    { role: "Auditor",          status: "ACC",     date: "2025-02-27", reason: "OK." }
+                  ]
+                }
+              ]
+            },
+            {
+              id: "proj-2",
+              name: "Audit Emisi Scope 1–3",
+              admin: "Gery",
+              esg: { sosial: true, lingkungan: true, tataKelola: false },
+              createdAt: "2025-04-02",
+              updatedAt: "2025-04-18",
+              deadline: "2025-05-15",
+              team: [
+                { name: "Gery Pratama", role: "Admin/Owner" },
+                { name: "Rama Wijaya", role: "Auditor Internal" },
+              ],
+              attachments: [{ name: "rencana-audit.docx", url: "#", type:"docx", size:"320 KB" }],
+              gallery: [{ alt: "Skema alur data audit", url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='400'><rect width='100%' height='100%' fill='%23f1f5f9'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23586' font-size='20'>Diagram Audit</text></svg>" }],
+              timeline: [
+                {
+                  date: "2025-04-05",
+                  actor: "Rama Wijaya",
+                  action: "Susun rencana audit awal",
+                  approvals: [
+                    { role: "Pemerintah", status: "ACC", date: "2025-04-08", reason: "Rencana jelas." },
+                    { role: "Dewan Komisaris", status: "Ditolak", date: "2025-04-09",
+                      reasonImage: { url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='320'><rect width='100%' height='100%' fill='%23fee2e2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23b91c1c' font-size='18'>Bukti temuan: grafik anomali</text></svg>", alt: "Bukti temuan grafik anomali" } },
+                    { role: "Investor", status: "Pending", date: null, reason: "" },
+                    { role: "Auditor",  status: "Pending", date: null, reason: "" }
+                  ]
+                }
+              ]
+            },
+            {
+              id: "proj-3",
+              name: "PLTS Desa Mandiri",
+              admin: "Rina",
+              esg: { sosial: true, lingkungan: true, tataKelola: true },
+              createdAt: "2025-05-20",
+              updatedAt: "2025-07-20",
+              deadline: "2025-07-15",
+              team: [
+                { name: "Rina Maharani", role: "PM" },
+                { name: "Andi Prakoso", role: "Engineer" },
+                { name: "Sari Wulandari", role: "Finance" },
+              ],
+              attachments: [{ name: "proposal.pdf", url: "#", type:"pdf", size:"900 KB" }],
+              gallery: [{ alt: "Lokasi PLTS - desa A", url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='400'><rect width='100%' height='100%' fill='%23fee2e2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23b91c1c' font-size='20'>Lokasi PLTS</text></svg>" }],
+              timeline: [
+                {
+                  date: "2025-07-10",
+                  actor: "Rina Maharani",
+                  action: "Submission dokumen final",
+                  approvals: [
+                    { role: "Pemerintah",       status: "ACC",     date: "2025-07-12", reason: "Sesuai ketentuan." },
+                    { role: "Dewan Komisaris",  status: "ACC",     date: "2025-07-13", reason: "Layak." },
+                    { role: "Investor",         status: "Ditolak", date: "2025-07-20",
+                      reasonImage: { url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='320'><rect width='100%' height='100%' fill='%23fff7ed'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23c2410c' font-size='18'>Analisis ROI (bukti)</text></svg>", alt:"Analisis ROI (bukti)" } },
+                    { role: "Auditor",          status: "Pending", date: null, reason: "" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+
+        /* --------------------------- PT Beta Industri --------------------------- */
+        {
+          id: "comp-b",
+          name: "PT Beta Industri",
+          sector: "Manufaktur",
+          location: "Surabaya",
+          quality: { employees: 74, company: 71 },
+          projects: [
+            {
+              id: "b-proj-1",
+              name: "Upgrade IPAL Limbah Cair",
+              admin: "Dina",
+              esg: { sosial: true, lingkungan: true, tataKelola: true },
+              createdAt: "2025-02-10",
+              updatedAt: "2025-06-05",
+              deadline: "2025-06-01",
+              team: [
+                { name: "Dina Kartika", role: "Admin/Owner" },
+                { name: "Yoga Firmansyah", role: "Process Engineer" },
+              ],
+              attachments: [{ name:"desain-instalasi.pdf", url:"#", type:"pdf", size:"1.1 MB" }],
+              gallery: [],
+              timeline: [
+                {
+                  date: "2025-05-28",
+                  actor: "Dina Kartika",
+                  action: "Submit untuk review",
+                  approvals: [
+                    { role: "Pemerintah",       status: "ACC",     date: "2025-06-03", reason: "Sesuai baku mutu." },
+                    { role: "Dewan Komisaris",  status: "ACC",     date: "2025-06-04", reason: "OK." },
+                    { role: "Investor",         status: "ACC",     date: "2025-06-04", reason: "Budget siap." },
+                    { role: "Auditor",          status: "Ditolak", date: "2025-06-05", reason: "Temuan ketidaksesuaian uji beban." }
+                  ]
+                }
+              ]
+            },
+            {
+              id: "b-proj-2",
+              name: "Pelatihan K3 Tahap 2",
+              admin: "Dina",
+              esg: { sosial: true, lingkungan: true, tataKelola: true },
+              createdAt: "2025-01-20",
+              updatedAt: "2025-03-05",
+              deadline: "2025-03-10",
+              team: [
+                { name: "Dina Kartika", role: "Admin/Owner" },
+                { name: "Rafi Hidayat", role: "Trainer" },
+              ],
+              attachments: [{ name:"materi-k3.pdf", url:"#", type:"pdf", size:"650 KB" }],
+              gallery: [],
+              timeline: [
+                {
+                  date: "2025-03-05",
+                  actor: "Dina Kartika",
+                  action: "Submit laporan akhir",
+                  approvals: [
+                    { role: "Pemerintah",       status: "ACC",     date: "2025-03-08", reason: "Program sesuai standar." },
+                    { role: "Dewan Komisaris",  status: "ACC",     date: "2025-03-08", reason: "OK." },
+                    { role: "Investor",         status: "ACC",     date: "2025-03-09", reason: "Nilai tambah SDM." },
+                    { role: "Auditor",          status: "ACC",     date: "2025-03-09", reason: "Dokumen lengkap." }
+                  ]
+                }
+              ]
+            },
+            {
+              id: "b-proj-3",
+              name: "Audit Supplier Bahan Baku",
+              admin: "Dina",
+              esg: { sosial: true, lingkungan: false, tataKelola: true },
+              createdAt: "2025-07-01",
+              updatedAt: "2025-09-03",
+              deadline: "2025-09-01",
+              team: [
+                { name: "Dina Kartika", role: "Admin/Owner" },
+                { name: "Yoga Firmansyah", role: "Auditor" },
+              ],
+              attachments: [],
+              gallery: [],
+              timeline: [
+                {
+                  date: "2025-09-01",
+                  actor: "Dina Kartika",
+                  action: "Submit laporan audit",
+                  approvals: [
+                    { role: "Pemerintah",       status: "Pending", date: null, reason: "" },
+                    { role: "Dewan Komisaris",  status: "Pending", date: null, reason: "" },
+                    { role: "Investor",         status: "Pending", date: null, reason: "" },
+                    { role: "Auditor",          status: "Pending", date: null, reason: "" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+
+        /* ----------------------- PT Citra Agro Nusantara ----------------------- */
+        {
+          id: "comp-c",
+          name: "PT Citra Agro Nusantara",
+          sector: "Agroindustri",
+          location: "Medan",
+          quality: { employees: 79, company: 76 },
+          projects: [
+            {
+              id: "c-proj-1",
+              name: "Laporan Keberlanjutan Perkebunan 2025",
+              admin: "Surya",
+              esg: { sosial: true, lingkungan: true, tataKelola: true },
+              createdAt: "2025-02-10",
+              updatedAt: "2025-03-10",
+              deadline: "2025-03-15",
+              team: [{ name:"Surya H", role:"Admin" }, { name:"Mira P", role:"Analis" }],
+              attachments: [{ name:"laporan-perkebunan.pdf", url:"#", type:"pdf", size:"1.4 MB" }],
+              gallery: [],
+              timeline: [
+                {
+                  date: "2025-03-05",
+                  actor: "Surya H",
+                  action: "Submit laporan",
+                  approvals: [
+                    { role:"Pemerintah", status:"ACC", date:"2025-03-07", reason:"Sesuai ketentuan."},
+                    { role:"Dewan Komisaris", status:"ACC", date:"2025-03-08", reason:"OK"},
+                    { role:"Investor", status:"ACC", date:"2025-03-09", reason:"Prospek baik."},
+                    { role:"Auditor", status:"ACC", date:"2025-03-10", reason:"Audit lulus."}
+                  ]
+                }
+              ]
+            },
+            {
+              id: "c-proj-2",
+              name: "Program Reforestasi Area B",
+              admin: "Mira",
+              esg: { sosial: true, lingkungan: true, tataKelola: true },
+              createdAt: "2025-05-01",
+              updatedAt: "2025-06-01",
+              deadline: "2025-08-01",
+              team: [{ name:"Mira P", role:"PM" }],
+              attachments: [],
+              gallery: [],
+              timeline: [
+                {
+                  date: "2025-06-01",
+                  actor: "Mira P",
+                  action: "Submit rencana",
+                  approvals: [
+                    { role:"Pemerintah", status:"Pending", date:null, reason:"" },
+                    { role:"Dewan Komisaris", status:"Pending", date:null, reason:"" },
+                    { role:"Investor", status:"Pending", date:null, reason:"" },
+                    { role:"Auditor", status:"Pending", date:null, reason:"" }
+                  ]
+                }
+              ]
+            },
+            {
+              id: "c-proj-3",
+              name: "Audit Pemasok Pupuk",
+              admin: "Surya",
+              esg: { sosial: true, lingkungan: true, tataKelola: true },
+              createdAt: "2025-04-10",
+              updatedAt: "2025-04-20",
+              deadline: "2025-04-25",
+              team: [{ name:"Surya H", role:"Admin" }],
+              attachments: [],
+              gallery: [],
+              timeline: [
+                {
+                  date: "2025-04-18",
+                  actor: "Surya H",
+                  action: "Submit audit",
+                  approvals: [
+                    { role:"Pemerintah", status:"Ditolak", date:"2025-04-20",
+                      reasonImage:{ url:"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='320'><rect width='100%' height='100%' fill='%23fee2e2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23b91c1c' font-size='18'>Bukti pelanggaran pemasok</text></svg>", alt:"Bukti pelanggaran pemasok" } },
+                    { role:"Dewan Komisaris", status:"Pending", date:null, reason:"" },
+                    { role:"Investor", status:"Pending", date:null, reason:"" },
+                    { role:"Auditor", status:"Pending", date:null, reason:"" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+
+        /* --------------------------- PT Delta Logistik -------------------------- */
+        {
+          id: "comp-d",
+          name: "PT Delta Logistik",
+          sector: "Logistik",
+          location: "Bandung",
+          quality: { employees: 70, company: 73 },
+          projects: [
+            {
+              id: "d-proj-1",
+              name: "Optimasi Rute Hijau",
+              admin: "Arif",
+              esg: { sosial: true, lingkungan: true, tataKelola: true },
+              createdAt: "2025-02-01",
+              updatedAt: "2025-04-10",
+              deadline: "2025-04-15",
+              team: [{ name:"Arif", role:"Owner" }, { name:"Dewi", role:"Data Scientist"}],
+              attachments: [{ name:"rencana-optimalisasi.pdf", url:"#", type:"pdf", size:"750 KB" }],
+              gallery: [],
+              timeline: [
+                { date:"2025-03-30", actor:"Arif", action:"Submit final",
+                  approvals:[
+                    { role:"Pemerintah", status:"ACC", date:"2025-04-02", reason:"OK" },
+                    { role:"Dewan Komisaris", status:"ACC", date:"2025-04-05", reason:"Strategis" },
+                    { role:"Investor", status:"ACC", date:"2025-04-06", reason:"Efisiensi biaya" },
+                    { role:"Auditor", status:"ACC", date:"2025-04-10", reason:"Data valid" },
+                  ]
+                }
+              ]
+            },
+            {
+              id: "d-proj-2",
+              name: "Penggantian Armada Euro 6",
+              admin: "Arif",
+              esg: { sosial: true, lingkungan: true, tataKelola: true },
+              createdAt: "2025-06-01",
+              updatedAt: "2025-07-12",
+              deadline: "2025-09-01",
+              team: [{ name:"Arif", role:"Owner" }],
+              attachments: [],
+              gallery: [],
+              timeline: [
+                { date:"2025-07-12", actor:"Arif", action:"Submit rencana",
+                  approvals:[
+                    { role:"Pemerintah", status:"Pending", date:null, reason:"" },
+                    { role:"Dewan Komisaris", status:"Pending", date:null, reason:"" },
+                    { role:"Investor", status:"Pending", date:null, reason:"" },
+                    { role:"Auditor", status:"Pending", date:null, reason:"" },
+                  ]
+                }
+              ]
+            },
+            {
+              id: "d-proj-3",
+              name: "Keselamatan Gudang Q2",
+              admin: "Dewi",
+              esg: { sosial: true, lingkungan: true, tataKelola: true },
+              createdAt: "2025-03-15",
+              updatedAt: "2025-05-05",
+              deadline: "2025-05-01",
+              team: [{ name:"Dewi", role:"Admin" }],
+              attachments: [],
+              gallery: [],
+              timeline: [
+                { date:"2025-04-28", actor:"Dewi", action:"Submit laporan",
+                  approvals:[
+                    { role:"Pemerintah", status:"ACC", date:"2025-04-29", reason:"OK" },
+                    { role:"Dewan Komisaris", status:"ACC", date:"2025-04-30", reason:"Memadai" },
+                    { role:"Investor", status:"ACC", date:"2025-05-01", reason:"Budget OK" },
+                    { role:"Auditor", status:"Ditolak", date:"2025-05-05", reason:"Temuan SOP belum dipenuhi" },
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+
+        /* --------------------------- PT Epsilon Digital ------------------------- */
+        {
+          id: "comp-e",
+          name: "PT Epsilon Digital",
+          sector: "Teknologi",
+          location: "Jakarta",
+          quality: { employees: 86, company: 83 },
+          projects: [
+            {
+              id: "e-proj-1",
+              name: "Data Center Green Retrofit",
+              admin: "Sinta",
+              esg: { sosial: true, lingkungan: true, tataKelola: true },
+              createdAt: "2025-01-05",
+              updatedAt: "2025-03-25",
+              deadline: "2025-03-01",
+              team: [{ name:"Sinta", role:"Owner" }, { name:"Reza", role:"Engineer" }],
+              attachments: [{ name:"retrofitting-plan.pdf", url:"#", type:"pdf", size:"1.3 MB" }],
+              gallery: [],
+              timeline: [
+                { date:"2025-02-25", actor:"Sinta", action:"Submit akhir",
+                  approvals:[
+                    { role:"Pemerintah", status:"ACC", date:"2025-03-05", reason:"Sesuai" },
+                    { role:"Dewan Komisaris", status:"ACC", date:"2025-03-10", reason:"OK" },
+                    { role:"Investor", status:"ACC", date:"2025-03-15", reason:"ROI menarik" },
+                    { role:"Auditor", status:"ACC", date:"2025-03-25", reason:"Verifikasi selesai" },
+                  ]
+                }
+              ]
+            },
+            {
+              id: "e-proj-2",
+              name: "Kampanye CSR Literasi Digital",
+              admin: "Reza",
+              esg: { sosial: true, lingkungan: true, tataKelola: true },
+              createdAt: "2025-04-01",
+              updatedAt: "2025-05-01",
+              deadline: "2025-05-15",
+              team: [{ name:"Reza", role:"Admin" }],
+              attachments: [{ name:"materi-csr.pdf", url:"#", type:"pdf", size:"520 KB" }],
+              gallery: [],
+              timeline: [
+                { date:"2025-05-01", actor:"Reza", action:"Submit materi",
+                  approvals:[
+                    { role:"Pemerintah", status:"ACC", date:"2025-05-05", reason:"OK" },
+                    { role:"Dewan Komisaris", status:"ACC", date:"2025-05-06", reason:"Selaras" },
+                    { role:"Investor", status:"ACC", date:"2025-05-07", reason:"Dukungan reputasi" },
+                    { role:"Auditor", status:"ACC", date:"2025-05-08", reason:"Dokumen lengkap" },
+                  ]
+                }
+              ]
+            },
+            {
+              id: "e-proj-3",
+              name: "Audit Vendor E-Waste",
+              admin: "Sinta",
+              esg: { sosial: true, lingkungan: true, tataKelola: false },
+              createdAt: "2025-06-10",
+              updatedAt: "2025-08-01",
+              deadline: "2025-08-15",
+              team: [{ name:"Sinta", role:"Owner" }],
+              attachments: [],
+              gallery: [],
+              timeline: [
+                { date:"2025-08-01", actor:"Sinta", action:"Submit awal",
+                  approvals:[
+                    { role:"Pemerintah", status:"Pending", date:null, reason:"" },
+                    { role:"Dewan Komisaris", status:"Pending", date:null, reason:"" },
+                    { role:"Investor", status:"Pending", date:null, reason:"" },
+                    { role:"Auditor", status:"Pending", date:null, reason:"" },
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+  </script>
+
+  <!-- ===================== NAVBAR ===================== -->
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:bg-white focus:px-3 focus:py-2 focus:rounded">Skip to content</a>
+  <header class="sticky top-0 z-50 glass border-b border-slate-200 soft-shadow">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-4">
+      <button id="brandBtn" class="flex items-center gap-2 font-semibold tracking-tight hover:opacity-90" aria-label="Ke Home">
+        <span class="inline-flex items-center justify-center size-9 rounded-xl bg-blue-100 text-blue-700 ring-1 ring-blue-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm1 15h-2v-2h2Zm0-4h-2V7h2Z"/></svg>
+        </span>
+        <span>ESG Report – Quest</span>
+      </button>
+
+      <nav class="ml-auto hidden md:flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1" aria-label="Primary">
+        <a href="#/"           class="nav-link" data-route="#/">Home</a>
+        <a href="#/solutions"  class="nav-link" data-route="#/solutions">Solutions</a>
+        <a href="#/companies"  class="nav-link" data-route="#/companies">Companies</a>
+        <a href="#/about"      class="nav-link" data-route="#/about">About</a>
+        <a href="#/contact"    class="nav-link" data-route="#/contact">Contact</a>
+      </nav>
+
+      <div class="hidden md:flex items-center gap-3">
+        <div class="relative">
+          <label for="globalSearch" class="sr-only">Pencarian</label>
+          <input id="globalSearch" type="search" placeholder="Cari perusahaan…"
+                 class="w-64 rounded-xl border border-slate-300 bg-white px-3 py-2 pr-9 text-sm focus:ring-2 focus:ring-blue-500" />
+          <svg class="pointer-events-none absolute right-2 top-2.5 size-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"/></svg>
+        </div>
+        <a href="#/contact" class="btn btn-primary">Request Demo</a>
+      </div>
+
+      <!-- Mobile -->
+      <button id="menuBtn" class="md:hidden ml-auto inline-flex items-center justify-center size-10 rounded-xl border border-slate-200 bg-white" aria-expanded="false" aria-controls="mobileMenu" aria-label="Buka menu">
+        <svg class="size-5" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+
+    <div id="mobileMenu" class="md:hidden hidden border-t border-slate-200 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 grid gap-3">
+        <a href="#/" class="px-3 py-2 rounded-lg hover:bg-slate-50" data-route="#/">Home</a>
+        <a href="#/solutions" class="px-3 py-2 rounded-lg hover:bg-slate-50" data-route="#/solutions">Solutions</a>
+        <a href="#/companies" class="px-3 py-2 rounded-lg hover:bg-slate-50" data-route="#/companies">Companies</a>
+        <a href="#/about" class="px-3 py-2 rounded-lg hover:bg-slate-50" data-route="#/about">About</a>
+        <a href="#/contact" class="px-3 py-2 rounded-lg hover:bg-slate-50" data-route="#/contact">Contact</a>
+        <a href="#/contact" class="btn btn-primary w-full justify-center mt-1">Request Demo</a>
+        <div class="relative mt-2">
+          <input id="globalSearchMobile" type="search" placeholder="Cari perusahaan…"
+                 class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 pr-9 text-sm focus:ring-2 focus:ring-blue-500" />
+          <svg class="pointer-events-none absolute right-2 top-2.5 size-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"/></svg>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== APP (flex-1 agar footer nempel bawah) ===================== -->
+  <main id="app" class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" tabindex="-1" id="main"></main>
+
+  <footer class="border-t border-slate-200 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid md:grid-cols-4 gap-8 text-sm">
+      <div>
+        <div class="flex items-center gap-2 font-semibold">
+          <span class="inline-flex items-center justify-center size-8 rounded-lg bg-blue-100 text-blue-700 ring-1 ring-blue-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Z"/></svg>
+          </span>
+          ESG Report – Quest
+        </div>
+        <p class="mt-3 text-slate-600">Transparansi (simulasi) via blockchain. Single-file, Tailwind CDN, SPA.</p>
+      </div>
+      <div>
+        <div class="font-semibold">Product</div>
+        <ul class="mt-2 space-y-2 text-slate-600">
+          <li><a href="#/solutions" class="hover:underline">Solutions</a></li>
+          <li><a href="#/companies" class="hover:underline">Companies</a></li>
+          <li><a href="#/about" class="hover:underline">About</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="font-semibold">Company</div>
+        <ul class="mt-2 space-y-2 text-slate-600">
+          <li><a href="#/contact" class="hover:underline">Contact</a></li>
+          <li><a href="#/" class="hover:underline">Home</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="font-semibold">Legal</div>
+        <ul class="mt-2 space-y-2 text-slate-600">
+          <li><a href="#" class="hover:underline">Privacy</a></li>
+          <li><a href="#" class="hover:underline">Terms</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================== HELPERS & LOGIC ===================== -->
+  <script>
+    const $ = (sel, ctx=document) => ctx.querySelector(sel);
+    const $$ = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
+
+    const formatDate = (iso) => {
+      if(!iso) return "-";
+      const d = new Date(iso + "T00:00:00");
+      return d.toLocaleDateString("id-ID", { day:"2-digit", month:"short", year:"numeric" });
+    };
+    const initials = (name="") => name.split(" ").filter(Boolean).map(n=>n[0]).slice(0,2).join("").toUpperCase();
+    const avatar = (name) => `<span class="inline-flex items-center justify-center size-8 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold" aria-hidden="true">${initials(name)}</span>`;
+
+    const statusIcon = (status)=> {
+      if(status==="ACC") return `<svg class="size-3" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>`;
+      if(status==="Pending") return `<svg class="size-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h5v2H11z"/><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Z"/></svg>`;
+      if(status==="Ditolak") return `<svg class="size-3" viewBox="0 0 24 24" fill="currentColor"><path d="m16.24 7.76-8.48 8.48M7.76 7.76l8.48 8.48"/><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/></svg>`;
+      return "";
+    };
+    const badge = (status) => {
+      const map = {
+        "ACC": "bg-emerald-50 text-emerald-700 ring-emerald-200",
+        "Pending": "bg-amber-50 text-amber-700 ring-amber-200",
+        "Ditolak": "bg-rose-50 text-rose-700 ring-rose-200",
+      };
+      const cls = map[status] || "bg-slate-100 text-slate-700 ring-slate-200";
+      return `<span class="badge ring-1 ${cls}" aria-label="Status ${status}">${statusIcon(status)} ${status}</span>`;
+    };
+
+    // ======== APPROVAL LOGIC ========
+    const ROLE_ORDER = ["Pemerintah","Dewan Komisaris","Investor","Auditor"];
+
+    const computeOverallStatusFromApprovals = (approvals=[]) => {
+      const hasReject = approvals.some(a=> a.status === "Ditolak");
+      const allAcc = approvals.length>0 && approvals.every(a=> a.status === "ACC");
+      if(allAcc) return "ACC";
+      if(hasReject) return "Ditolak";
+      return "Pending";
+    };
+
+    function applyCascadingLock(approvals=[]) {
+      const ordered = approvals.slice().sort((a,b)=> ROLE_ORDER.indexOf(a.role)-ROLE_ORDER.indexOf(b.role));
+      let rejected = false;
+      return ordered.map(a=>{
+        const wasRejected = rejected;
+        if(a.status==="Ditolak") rejected = true;
+        return { ...a, _lockedAfter: wasRejected };
+      });
+    }
+
+    const getLatestApprovalSet = (p) => {
+      const items = (p.timeline||[]).slice().sort((a,b)=> new Date(a.date)-new Date(b.date));
+      for(let i = items.length-1; i>=0; i--){
+        if(Array.isArray(items[i].approvals) && items[i].approvals.length) return items[i];
+      }
+      return null;
+    };
+    const computeProjectOverall = (p) => {
+      const last = getLatestApprovalSet(p);
+      return last ? computeOverallStatusFromApprovals(last.approvals) : "Pending";
+    };
+    const finalApprovalDate = (p) => {
+      const last = getLatestApprovalSet(p);
+      if(!last) return null;
+      const status = computeOverallStatusFromApprovals(last.approvals);
+      if(status !== "ACC") return null;
+      const dates = last.approvals.filter(a=>a.status==="ACC" && a.date).map(a=> new Date(a.date+"T00:00:00"));
+      if(!dates.length) return null;
+      return new Date(Math.max(...dates.map(d=>d.getTime())));
+    };
+
+    const today = new Date();
+    const atEndOfDay = (iso) => new Date(iso+"T23:59:59");
+    const isLate = (p) => {
+      if(!p.deadline) return false;
+      const due = atEndOfDay(p.deadline);
+      const overall = computeProjectOverall(p);
+      if(overall==="ACC"){
+        const fin = finalApprovalDate(p);
+        return fin ? fin > due : today > due;
+      }
+      return today > due;
+    };
+    const lateDays = (p) => {
+      if(!p.deadline) return 0;
+      const due = atEndOfDay(p.deadline).getTime();
+      let ref;
+      const overall = computeProjectOverall(p);
+      if(overall==="ACC"){
+        const fin = finalApprovalDate(p);
+        ref = fin ? fin.getTime() : today.getTime();
+      } else {
+        ref = today.getTime();
+      }
+      const diff = Math.floor((ref - due) / (1000*60*60*24));
+      return diff > 0 ? diff : 0;
+    };
+    const isFailed = (p) => computeProjectOverall(p) === "Ditolak";
+
+    const companyStats = (c) => {
+      const projects = c.projects || [];
+      const late = projects.filter(isLate).length;
+      const failed = projects.filter(isFailed).length;
+      const completed = projects.filter(p => computeProjectOverall(p)==="ACC");
+      const onTimeApproved = completed.filter(p => {
+        const fin = finalApprovalDate(p);
+        return p.deadline && fin && fin <= atEndOfDay(p.deadline);
+      }).length;
+      const consistency = projects.length ? Math.round(onTimeApproved / projects.length * 100) : 0;
+      const inconsistency = 100 - consistency;
+      return { late, failed, consistency, inconsistency, total: projects.length, onTimeApproved };
+    };
+
+    const searchCompanies = (query) => {
+      const q = (query||"").trim().toLowerCase();
+      if(!q) return DATA.companies;
+      return DATA.companies.filter(c => c.name.toLowerCase().includes(q));
+    };
+    const debounce = (fn, ms=300) => { let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); }; };
+
+    // ===================== ROUTER =====================
+    const routes = {
+      "": () => renderLanding(),
+      "#/": () => renderLanding(),
+      "#/solutions": () => renderSolutions(),
+      "#/about": () => renderAbout(),
+      "#/companies": () => renderCompanies(),
+      "#/company": (parts) => renderCompany(parts[2]),
+      "#/company-project": (parts) => renderProject(parts[2], parts[4]),
+      "#/contact": () => renderContact(),
+    };
+    function router(){
+      const hash = location.hash || "#/";
+      const parts = hash.split("/");
+      highlightNav(hash);
+      if(hash.startsWith("#/company/") && parts.length===3) return routes["#/company"](parts);
+      if(hash.startsWith("#/company/") && hash.includes("/project/")) return routes["#/company-project"](parts);
+      if(routes[hash]) return routes[hash]();
+      return routes["#/"]();
+    }
+    function highlightNav(current){
+      $$(".nav-link").forEach(a=>{
+        if(a.dataset.route===current){ a.classList.add("nav-active"); }
+        else a.classList.remove("nav-active");
+      });
+      $$("#mobileMenu a[data-route]").forEach(a=>{
+        if(a.dataset.route===current){ a.classList.add("bg-blue-50","text-blue-700"); }
+        else a.classList.remove("bg-blue-50","text-blue-700");
+      });
+    }
+
+    // ===================== CHARTS =====================
+    function drawConsistencyChart(){
+      const canvas = document.getElementById("consistencyChart");
+      if(!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const wrapper = canvas.parentElement;
+      canvas.width = wrapper.clientWidth;
+      canvas.height = 260;
+
+      const labels = DATA.companies.map(c=>c.name);
+      const values = DATA.companies.map(c=>companyStats(c).consistency);
+      const max = 100;
+
+      const pad = { left: 56, right: 16, top: 16, bottom: 56 };
+      const chartW = canvas.width - pad.left - pad.right;
+      const chartH = canvas.height - pad.top - pad.bottom;
+
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+      ctx.fillStyle = "#0f172a";
+
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.lineWidth = 1;
+      [0,25,50,75,100].forEach(p=>{
+        const y = pad.top + chartH * (1 - p/max);
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(canvas.width - pad.right, y); ctx.stroke();
+        ctx.fillStyle = "#475569"; ctx.fillText(p+"%", 10, y+4);
+      });
+
+      const barCount = values.length;
+      const barGap = 20;
+      const barW = Math.max(28, (chartW - barGap*(barCount-1)) / barCount);
+
+      values.forEach((val, i)=>{
+        const x = pad.left + i*(barW+barGap);
+        const h = chartH * (val/max);
+        const y = pad.top + (chartH - h);
+        ctx.fillStyle = "#1d4ed8";
+        ctx.fillRect(x, y, barW, h);
+
+        const ty = pad.top + chartH * (1 - 0.8);
+        ctx.strokeStyle = "#94a3b8"; ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(pad.left, ty); ctx.lineTo(canvas.width - pad.right, ty); ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = "#0f172a";
+        ctx.fillText(val+"%", x + barW/2 - ctx.measureText(val+"%").width/2, y - 6);
+        const text = labels[i]; const tw = ctx.measureText(text).width;
+        ctx.save(); ctx.translate(x + barW/2, canvas.height - 20); ctx.rotate(-Math.PI/8);
+        ctx.fillText(text, -tw/2, 0); ctx.restore();
+      });
+    }
+    function drawProjectDecisionChart(canvas, project){
+      if(!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const wrapper = canvas.parentElement;
+      canvas.width = wrapper.clientWidth;
+      canvas.height = 200;
+
+      let acc=0, reject=0;
+      (project.timeline||[]).forEach(item=>{
+        (item.approvals||[]).forEach(a=>{
+          if(a.status==="ACC") acc++;
+          else if(a.status==="Ditolak") reject++;
+        });
+      });
+
+      const labels = ["ACC","Ditolak"];
+      const values = [acc, reject];
+      const max = Math.max(5, Math.max(...values));
+
+      const pad = { left: 48, right: 16, top: 16, bottom: 40 };
+      const chartW = canvas.width - pad.left - pad.right;
+      const chartH = canvas.height - pad.top - pad.bottom;
+
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+      ctx.fillStyle = "#0f172a";
+
+      ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 1;
+      const steps = Math.min(5, max);
+      for(let i=0;i<=steps;i++){
+        const val = Math.round(max*i/steps);
+        const y = pad.top + chartH * (1 - val/max);
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(canvas.width - pad.right, y); ctx.stroke();
+        ctx.fillStyle = "#475569"; ctx.fillText(val.toString(), 10, y+4);
+      }
+
+      const barCount = values.length;
+      const barGap = 28;
+      const barW = (chartW - barGap*(barCount-1)) / barCount;
+
+      values.forEach((val, i)=>{
+        const x = pad.left + i*(barW+barGap);
+        const h = chartH * (val/max);
+        const y = pad.top + (chartH - h);
+        ctx.fillStyle = i===0 ? "#10b981" : "#ef4444";
+        ctx.fillRect(x, y, barW, h);
+        ctx.fillStyle = "#0f172a";
+        const label = `${labels[i]} (${val})`;
+        ctx.fillText(label, x + barW/2 - ctx.measureText(label).width/2, canvas.height - 14);
+        ctx.fillText(val.toString(), x + barW/2 - ctx.measureText(val.toString()).width/2, y - 6);
+      });
+    }
+
+    // ===================== LANDING =====================
+    function landingMetric(label, value){
+      return `<div class="rounded-2xl border border-slate-200 bg-white p-4 soft-shadow"><div class="text-xs text-slate-600">${label}</div><div class="mt-1 text-xl font-semibold">${value}</div></div>`;
+    }
+    function featureCard(title, desc, hint){
+      return `<article class="card soft-shadow p-5 bg-white">
+        <div class="inline-flex size-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700 ring-1 ring-blue-200 mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Z"/></svg>
+        </div>
+        <h3 class="font-semibold">${title}</h3>
+        <p class="mt-1 text-sm text-slate-600">${desc}</p>
+        <p class="mt-2 text-xs text-slate-500">${hint}</p>
+      </article>`;
+    }
+    function companyTile(c, st){
+      return `<button onclick="location.hash='#/company/${c.id}'" class="text-left card soft-shadow p-4 hover:border-blue-300 hover:shadow-md transition">
+        <div class="font-medium">${c.name}</div>
+        <div class="text-sm text-slate-600">${c.sector} • ${c.location}</div>
+        <div class="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
+          <span>${st.total} proj</span>
+          <span>• ${st.onTimeApproved} on-time</span>
+          <span>• ${st.late} telat</span>
+          <span>• ${st.failed} gagal</span>
+          <span class="badge ring-1 bg-emerald-50 text-emerald-700 ring-emerald-200">Konsisten ${st.consistency}%</span>
+          <span class="badge ring-1 bg-rose-50 text-rose-700 ring-rose-200">Tidak Konsisten ${st.inconsistency}%</span>
+        </div>
+      </button>`;
+    }
+
+    function renderLanding(){
+      const totalCompanies = DATA.companies.length;
+      const allProjects = DATA.companies.flatMap(c=>c.projects || []);
+      const totalProjects = allProjects.length;
+      const accCount = allProjects.filter(p => computeProjectOverall(p)==="ACC").length;
+
+      $("#app").innerHTML = `
+        <!-- Hero -->
+        <section class="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-blue-50 to-indigo-50 soft-shadow">
+          <div class="absolute right-0 -top-24 w-[540px] h-[540px] bg-blue-200/40 rounded-full blur-3xl"></div>
+          <div class="absolute -left-16 -bottom-16 w-[420px] h-[420px] bg-indigo-200/40 rounded-full blur-3xl"></div>
+
+          <div class="relative z-10 p-8 lg:p-12 grid lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/70 px-3 py-1 text-xs text-blue-700">
+                Enterprise ESG • Transparansi via Blockchain (simulasi)
+              </div>
+              <h1 class="mt-3 text-3xl lg:text-4xl font-semibold leading-tight">
+                Company-grade ESG Reporting—<span class="text-blue-700">Clean</span>, <span class="text-blue-700">Auditable</span>, <span class="text-blue-700">Realtime</span>
+              </h1>
+              <p class="mt-3 text-slate-600 max-w-xl">
+                Dashboard korporat, kontrol approval bertingkat per laporan, dokumen & bukti gambar, metrik konsistensi—tanpa build tools, satu file.
+              </p>
+              <div class="mt-6 flex flex-wrap gap-3">
+                <a href="#/companies" class="btn btn-primary">Lihat Companies</a>
+                <a href="#/solutions" class="btn btn-ghost">Lihat Solutions</a>
+              </div>
+              <div class="mt-6 grid grid-cols-3 gap-3 max-w-lg">
+                ${landingMetric("Perusahaan", totalCompanies)}
+                ${landingMetric("Project", totalProjects)}
+                ${landingMetric("ACC", accCount)}
+              </div>
+              <div class="mt-6 text-xs text-slate-500">Trusted by (dummy): Alpha Energi • Beta Industri • Citra Agro • Delta Logistik • Epsilon Digital</div>
+            </div>
+            <div class="card soft-shadow p-4 bg-white">
+              <h3 class="font-semibold mb-2">Konsistensi Perusahaan</h3>
+              <canvas id="consistencyChart" aria-label="Grafik konsistensi"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Value Props -->
+        <section class="mt-10 grid lg:grid-cols-3 gap-6">
+          ${featureCard("Approval Bertingkat per Laporan","Setiap titik timeline punya 4 panel persetujuan. Jika satu pihak menolak, level berikutnya terkunci.","Hindari persetujuan yang tidak valid.")}
+          ${featureCard("Dokumen & Bukti Gambar","Lampirkan PDF/XLSX/DOCX dan bukti visual sebagai alasan.","Perkuat audit trail.")}
+          ${featureCard("KPI Konsistensi & Ketepatan Waktu","Konsisten vs tidak konsisten (ACC on-time), proyek telat & gagal.","Inspeksi efisien.")}
+        </section>
+
+        <!-- Quick Companies -->
+        <section class="mt-10 card soft-shadow p-5">
+          <div class="flex items-center justify-between">
+            <h2 class="font-semibold">Sekilas Perusahaan</h2>
+            <a href="#/companies" class="text-sm text-blue-700 hover:underline">Lihat semua</a>
+          </div>
+          <div class="mt-4 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${DATA.companies.map(c=>{
+              const st=companyStats(c);
+              return companyTile(c, st);
+            }).join("")}
+          </div>
+        </section>
+      `;
+      setTimeout(drawConsistencyChart, 0);
+      window.addEventListener("resize", debounce(()=>setTimeout(drawConsistencyChart,0), 120));
+    }
+
+    // ===================== SOLUTIONS / ABOUT / CONTACT =====================
+    function renderSolutions(){
+      $("#app").innerHTML = `
+        <section class="space-y-8">
+          <header class="rounded-3xl border border-slate-200 p-8 bg-gradient-to-br from-white to-slate-50 soft-shadow">
+            <h1 class="text-2xl md:text-3xl font-semibold">Solutions</h1>
+            <p class="mt-2 text-slate-600 max-w-3xl">
+              Modul ESG kami meliputi perekaman berbasis chain (simulasi), engine approval bertingkat, dan pelaporan korporat.
+            </p>
+            <div class="mt-5 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              ${landingMetric("On-chain*","Event log")}
+              ${landingMetric("Approvals","4 pihak")}
+              ${landingMetric("Analytics","Konsistensi")}
+              ${landingMetric("SPA","Tanpa reload")}
+            </div>
+          </header>
+
+          <section class="grid lg:grid-cols-3 gap-6">
+            ${featureCard("Ledger Events*", "Semua aksi (simulasi) tercatat sebagai event. Mudah diaudit & di-replay.", "*Simulasi UI, siap diarahkan ke chain pilihan.")}
+            ${featureCard("Role-based Access", "Admin: CRUD project/report. Pengawas: lihat & approve/reject.", "Siap integrasi SSO.")}
+            ${featureCard("Public View", "Halaman publik read-only untuk transparansi pemangku kepentingan.", "Kurangi asimetri informasi.")}
+          </section>
+        </section>
+      `;
+    }
+    function renderAbout(){
+      $("#app").innerHTML = `
+        <section class="space-y-8">
+          <header class="rounded-3xl border border-slate-200 p-8 bg-gradient-to-br from-white to-slate-50 soft-shadow">
+            <h1 class="text-2xl md:text-3xl font-semibold">About</h1>
+            <p class="mt-2 text-slate-600 max-w-3xl">
+              ESG Report – Quest adalah antarmuka korporat ringan yang menekankan kredibilitas, aksesibilitas, dan kemudahan integrasi.
+            </p>
+          </header>
+
+          <section class="grid lg:grid-cols-3 gap-6">
+            ${featureCard("Design System", "Light, clean, card-based, fokus pada tipografi & white space.", "Brand-ready.")}
+            ${featureCard("Accessibility", "Semantic tags, aria-label, focus ring, keyboard-friendly.", "Dasar compliance.")}
+            ${featureCard("Performance", "Single file, CDN Tailwind, tanpa bundler.", "Cepat dipasang.")}
+          </section>
+        </section>
+      `;
+    }
+    function renderContact(){
+      $("#app").innerHTML = `
+        <section class="grid lg:grid-cols-5 gap-6">
+          <div class="lg:col-span-3 card soft-shadow p-6 bg-gradient-to-br from-white to-slate-50">
+            <h1 class="text-2xl font-semibold">Contact</h1>
+            <p class="text-slate-600 mt-2">Ingin integrasi ke API/Blockchain Anda? Tinggalkan kebutuhan Anda—UI ini siap production.</p>
+            <ul class="mt-4 space-y-2 text-sm text-slate-700">
+              <li>• Email: example@esg.quest</li>
+              <li>• Telepon: +62-000-0000</li>
+              <li>• Alamat: Jakarta, Indonesia</li>
+            </ul>
+          </div>
+          <div class="lg:col-span-2 card soft-shadow p-6 bg-white">
+            <h2 class="font-semibold">Quick Links</h2>
+            <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+              <a href="#/" class="rounded-xl border border-slate-200 p-3 hover:bg-slate-50">Home</a>
+              <a href="#/solutions" class="rounded-xl border border-slate-200 p-3 hover:bg-slate-50">Solutions</a>
+              <a href="#/companies" class="rounded-xl border border-slate-200 p-3 hover:bg-slate-50">Companies</a>
+              <a href="#/about" class="rounded-xl border border-slate-200 p-3 hover:bg-slate-50">About</a>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    // ===================== COMPANIES (SEARCH) =====================
+    function renderCompanies(initialQuery=""){
+      $("#app").innerHTML = `
+        <section class="space-y-4" aria-labelledby="company-select">
+          <header class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+            <div>
+              <h1 id="company-select" class="text-xl sm:text-2xl font-semibold">Companies</h1>
+              <p class="text-slate-600">Cari & pilih perusahaan untuk melihat ringkasan dan proyek.</p>
+            </div>
+            <div class="relative w-full sm:w-80">
+              <input id="companySearch" type="search" placeholder="Cari nama perusahaan…" value="${initialQuery||""}"
+                     class="w-full rounded-xl border border-slate-300 px-3 py-2 pr-9 text-sm focus:ring-2 focus:ring-blue-500" aria-label="Cari nama perusahaan"/>
+              <svg class="pointer-events-none absolute right-2 top-2.5 size-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="m21 21-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"/></svg>
+            </div>
+          </header>
+
+          <div id="companyResults" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4" role="region" aria-live="polite" aria-label="Hasil pencarian perusahaan"></div>
+        </section>
+      `;
+
+      const input = $("#companySearch");
+      const renderList = (q) => {
+        const list = searchCompanies(q);
+        const html = list.length ? list.map(c=>{
+          const st = companyStats(c);
+          return companyTile(c, st);
+        }).join("") : `<p class="text-sm text-slate-500">Tidak ada hasil.</p>`;
+        $("#companyResults").innerHTML = html;
+      };
+      renderList(initialQuery);
+      input.addEventListener("input", debounce(e=>renderList(e.target.value),300));
+      $("#app").focus();
+    }
+
+    // ===================== COMPANY DETAIL =====================
+    function miniKPI(label, value) {
+      return `<div class="rounded-xl border border-slate-200 p-3 bg-white"><div class="text-xs text-slate-600">${label}</div><div class="text-lg font-semibold">${value}</div></div>`;
+    }
+    function renderCompany(companyId){
+      const c = DATA.companies.find(x=>x.id===companyId);
+      if(!c){ $("#app").innerHTML = `<p>Perusahaan tidak ditemukan.</p>`; return; }
+
+      const defaultSort = { key:"updatedAt", dir:"desc" };
+      let sortState = {...defaultSort};
+      const st = companyStats(c);
+
+      $("#app").innerHTML = `
+        <section class="space-y-6">
+          <header class="card soft-shadow p-5 bg-gradient-to-br from-white to-slate-50">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div>
+                <nav class="text-sm text-slate-500 mb-1">
+                  <a class="hover:underline" href="#/">Home</a> /
+                  <span class="text-slate-700">${c.name}</span>
+                </nav>
+                <h1 class="text-xl sm:text-2xl font-semibold">${c.name}</h1>
+                <p class="text-slate-600">${c.sector} • ${c.location}</p>
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <span class="badge ring-1 bg-emerald-50 text-emerald-700 ring-emerald-200">Konsisten ${st.consistency}%</span>
+                  <span class="badge ring-1 bg-rose-50 text-rose-700 ring-rose-200">Tidak Konsisten ${st.inconsistency}%</span>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-6 gap-3 w-full sm:w-auto">
+                ${miniKPI("Skor Karyawan", c.quality.employees)}
+                ${miniKPI("Skor Perusahaan", c.quality.company)}
+                ${miniKPI("Project", st.total)}
+                ${miniKPI("On-time ACC", st.onTimeApproved)}
+                ${miniKPI("Terlambat", st.late)}
+                ${miniKPI("Gagal", st.failed)}
+              </div>
+            </div>
+          </header>
+
+          <section class="card soft-shadow">
+            <div class="p-4 flex items-center justify-between"><h2 class="font-semibold">Projects</h2></div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead id="projHead" class="bg-slate-50 text-left">
+                  <tr>
+                    <th class="px-3 py-2">Nama Project</th>
+                    <th class="px-3 py-2">Owner/Admin</th>
+                    <th class="px-3 py-2 cursor-pointer select-none" role="columnheader" data-key="status">Status Keseluruhan</th>
+                    <th class="px-3 py-2">Mulai</th>
+                    <th class="px-3 py-2 cursor-pointer select-none" role="columnheader" data-key="updatedAt">Update Terakhir</th>
+                    <th class="px-3 py-2 cursor-pointer select-none" role="columnheader" data-key="deadline">Deadline</th>
+                    <th class="px-3 py-2">Dokumen</th>
+                  </tr>
+                </thead>
+                <tbody id="projectTbody"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      `;
+
+      const sortProjects = () => {
+        const copy = [...(c.projects||[])];
+        copy.sort((a,b)=>{
+          if(sortState.key === "status"){
+            const order = { "ACC":3, "Pending":2, "Ditolak":1 };
+            const sa = order[computeProjectOverall(a)]||0;
+            const sb = order[computeProjectOverall(b)]||0;
+            return sortState.dir==="asc" ? sa - sb : sb - sa;
+          } else if(sortState.key === "updatedAt"){
+            return sortState.dir==="asc" ? new Date(a.updatedAt) - new Date(b.updatedAt) : new Date(b.updatedAt) - new Date(a.updatedAt);
+          } else if(sortState.key === "deadline"){
+            const va = new Date(a.deadline||"2100-01-01"), vb = new Date(b.deadline||"2100-01-01");
+            return sortState.dir==="asc" ? va - vb : vb - va;
+          }
+          return 0;
+        });
+        return copy;
+      };
+
+      const drawTable = () => {
+        const rows = sortProjects().map(p => {
+          const overall = computeProjectOverall(p);
+          const late = isLate(p);
+          const lateInfo = late
+            ? `<span class="badge ring-1 bg-rose-50 text-rose-700 ring-rose-200">Telat ${lateDays(p)} hari</span>`
+            : `<span class="badge ring-1 bg-emerald-50 text-emerald-700 ring-emerald-200">On track</span>`;
+        return `
+          <tr role="button" tabindex="0" onclick="location.hash='#/company/${c.id}/project/${p.id}'" class="cursor-pointer">
+            <td class="px-3 py-2">${p.name}</td>
+            <td class="px-3 py-2">${p.admin}</td>
+            <td class="px-3 py-2">${badge(overall)}</td>
+            <td class="px-3 py-2">${formatDate(p.createdAt)}</td>
+            <td class="px-3 py-2">${formatDate(p.updatedAt)}</td>
+            <td class="px-3 py-2">
+              <div class="flex items-center gap-2">
+                <span>${formatDate(p.deadline)}</span>
+                ${lateInfo}
+              </div>
+            </td>
+            <td class="px-3 py-2">${p.attachments?.length || 0}</td>
+          </tr>`; }).join("");
+        $("#projectTbody").innerHTML = rows || `<tr><td colspan="7" class="px-3 py-6 text-center text-sm text-slate-500">Belum ada project.</td></tr>`;
+        $$("#projHead th[role='columnheader']").forEach(th=>th.removeAttribute("aria-sort"));
+        const th = $(`#projHead th[data-key="${sortState.key}"]`);
+        if(th) th.setAttribute("aria-sort", sortState.dir==="asc"?"ascending":"descending");
+      };
+
+      drawTable();
+      $$("#projHead th[role='columnheader']").forEach(th=>{
+        th.addEventListener("click", ()=>{
+          const key = th.dataset.key;
+          if(sortState.key === key){ sortState.dir = sortState.dir==="asc" ? "desc" : "asc"; }
+          else { sortState.key = key; sortState.dir = "desc"; }
+          drawTable();
+        });
+      });
+    }
+
+    // ===================== PROJECT DETAIL =====================
+    function renderProject(companyId, projectId){
+      const c = DATA.companies.find(x=>x.id===companyId);
+      const p = c?.projects?.find(x=>x.id===projectId);
+      if(!c || !p){ $("#app").innerHTML = `<p>Project tidak ditemukan.</p>`; return; }
+
+      const overall = computeProjectOverall(p);
+      const late = isLate(p);
+      const lateness = lateDays(p);
+      const esgWarnings = [];
+      if(!p.esg?.sosial) esgWarnings.push("Sosial");
+      if(!p.esg?.lingkungan) esgWarnings.push("Lingkungan");
+      if(!p.esg?.tataKelola) esgWarnings.push("Tata Kelola");
+
+      $("#app").innerHTML = `
+        <article class="space-y-8">
+          <section class="card soft-shadow p-5 bg-gradient-to-br from-white to-slate-50">
+            <nav class="text-sm text-slate-500 mb-1"><a class="hover:underline" href="#/">Home</a> / <a class="hover:underline" href="#/company/${c.id}">${c.name}</a> / <span class="text-slate-700">${p.name}</span></nav>
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+              <div>
+                <h1 class="text-xl sm:text-2xl font-semibold">${p.name}</h1>
+                <p class="text-slate-600">Admin: <span class="font-medium">${p.admin}</span></p>
+                <p class="text-xs text-slate-500 mt-1">Mulai ${formatDate(p.createdAt)} • Update ${formatDate(p.updatedAt)}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="text-sm">Status:</div>
+                ${badge(overall)}
+              </div>
+            </div>
+
+            <div class="mt-3 grid sm:grid-cols-3 gap-3">
+              <div class="rounded-xl border border-slate-200 p-3 bg-white">
+                <div class="text-xs text-slate-600">Deadline</div>
+                <div class="text-sm font-medium">${formatDate(p.deadline)}</div>
+                ${late ? `<div class="mt-1 text-xs text-rose-700">Telat ${lateness} hari</div>` : `<div class="mt-1 text-xs text-emerald-700">On track</div>`}
+              </div>
+              <div class="rounded-xl border border-slate-200 p-3 bg-white col-span-2">
+                ${esgWarnings.length ? `
+                  <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800" role="alert" aria-live="assertive">
+                    Unsur ESG belum lengkap: <span class="font-medium">${esgWarnings.join(", ")}</span>.
+                  </div>` : `
+                  <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800" role="status">
+                    ESG 3 unsur ✅ terpenuhi (Sosial, Lingkungan, Tata Kelola).
+                  </div>`}
+              </div>
+            </div>
+          </section>
+
+          <!-- Grafik Keputusan -->
+          <section class="card soft-shadow p-5 bg-white">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="font-semibold">Grafik Keputusan (gabungan seluruh laporan)</h2>
+              <span class="text-xs text-slate-500">ACC vs Ditolak (Pending diabaikan)</span>
+            </div>
+            <canvas id="projDecisionChart" aria-label="Bar chart keputusan"></canvas>
+          </section>
+
+          <!-- Timeline & Approvals -->
+          <section class="card soft-shadow p-5 bg-white">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-semibold">Timeline & Approval per Laporan</h2>
+              <div class="text-xs text-slate-500">Penolakan bertingkat aktif</div>
+            </div>
+            <div class="relative timeline pl-3 sm:pl-8">
+              ${p.timeline.slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).map((item, idx)=>{
+                const approvalsOrdered = applyCascadingLock(item.approvals||[]);
+                const overallStep = computeOverallStatusFromApprovals(item.approvals||[]);
+                let rejectSeen = false;
+                return `
+                <div class="relative mb-6">
+                  <span class="absolute left-0 sm:-left-[.45rem] top-1 inline-flex size-3 rounded-full bg-blue-600" aria-hidden="true"></span>
+                  <div class="sm:ml-5">
+                    <div class="flex items-center gap-2">
+                      ${avatar(item.actor)}
+                      <div>
+                        <div class="text-sm"><span class="font-medium">${item.actor}</span> — ${item.action}</div>
+                        <div class="text-xs text-slate-500">${formatDate(item.date)}</div>
+                      </div>
+                      <div class="ml-auto hidden sm:block">${badge(overallStep)}</div>
+                    </div>
+
+                    <details class="mt-3 group">
+                      <summary class="cursor-pointer select-none rounded-lg border border-slate-200 px-3 py-2 text-sm flex items-center justify-between hover:bg-slate-50">
+                        <span class="flex items-center gap-2">Persetujuan (4 pihak)</span>
+                        <span class="text-xs text-slate-500 group-open:hidden">Buka</span>
+                        <span class="text-xs text-slate-500 hidden group-open:inline">Tutup</span>
+                      </summary>
+                      <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        ${approvalsOrdered.map((a,i)=>{
+                          if (a.status==="Ditolak") rejectSeen = true;
+                          const locked = rejectSeen && a.status!=="Ditolak";
+                          const reasonBlock = a.reasonImage
+                            ? `<figure class="mt-2 rounded-lg overflow-hidden border border-slate-200 bg-white">
+                                <img src="${a.reasonImage.url}" alt="${a.reasonImage.alt||('Bukti '+a.role)}" class="w-full h-40 object-cover"/>
+                                <figcaption class="p-2 text-xs text-slate-600">${a.reasonImage.alt||'Bukti'}</figcaption>
+                              </figure>`
+                            : `<textarea readonly class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 text-sm" rows="2" aria-label="Alasan ${a.role}">${a.reason||""}</textarea>`;
+                          return `
+                            <section class="rounded-xl border border-slate-200 p-4 ${locked?'locked':''}" aria-labelledby="appr-${idx}-${i}">
+                              <h3 id="appr-${idx}-${i}" class="font-medium">${a.role} ${locked? `<span class="ml-1 text-rose-600 text-xs">(terblokir)</span>`:""}</h3>
+                              <div class="mt-2 flex items-center gap-2">${badge(a.status)}</div>
+                              <dl class="mt-2 text-sm">
+                                <div class="grid grid-cols-3">
+                                  <dt class="text-slate-500">Tanggal</dt>
+                                  <dd class="col-span-2">${a.date ? formatDate(a.date) : "-"}</dd>
+                                </div>
+                                <div class="mt-1">
+                                  <dt class="text-slate-500">Alasan</dt>
+                                  <dd>${reasonBlock}</dd>
+                                </div>
+                              </dl>
+                              ${locked? `<p class="mt-2 text-xs text-rose-700">Tidak dapat memberi persetujuan karena ada penolakan sebelumnya.</p>`:""}
+                            </section>`;
+                        }).join("")}
+                      </div>
+                    </details>
+                  </div>
+                </div>`;
+              }).join("")}
+            </div>
+          </section>
+
+          <!-- Team -->
+          <section class="card soft-shadow p-5 bg-white">
+            <h2 class="font-semibold mb-3">Tim Proyek</h2>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              ${p.team?.map(m=>`
+                <div class="rounded-xl border border-slate-200 p-3 flex items-center gap-3 bg-white">
+                  ${avatar(m.name)}
+                  <div>
+                    <div class="font-medium text-sm">${m.name}</div>
+                    <div class="text-xs text-slate-600">${m.role}</div>
+                  </div>
+                </div>
+              `).join("") || `<p class="text-sm text-slate-500">Belum ada data tim.</p>`}
+            </div>
+          </section>
+
+          <!-- Documents -->
+          <section class="card soft-shadow p-5 bg-white">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="font-semibold">Dokumen</h2>
+              <div class="text-xs text-slate-500">${p.attachments?.length||0} berkas</div>
+            </div>
+            ${p.attachments?.length
+              ? `<ul class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  ${p.attachments.map(f=> fileCard(f)).join("")}
+                 </ul>`
+              : `<p class="text-sm text-slate-500">Belum ada dokumen.</p>`
+            }
+          </section>
+
+          <!-- Gallery -->
+          <section class="card soft-shadow p-5 bg-white">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="font-semibold">Galeri</h2>
+              <div class="text-xs text-slate-500">${p.gallery?.length||0} gambar</div>
+            </div>
+            ${p.gallery?.length
+              ? `<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  ${p.gallery.map(g=>`
+                    <figure class="rounded-xl overflow-hidden border border-slate-200 bg-white">
+                      <img src="${g.url}" alt="${g.alt}" class="w-full h-44 object-cover" />
+                      <figcaption class="p-2 text-xs text-slate-600">${g.alt}</figcaption>
+                    </figure>
+                  `).join("")}
+                 </div>`
+              : `<p class="text-sm text-slate-500">Belum ada gambar.</p>`
+            }
+          </section>
+        </article>
+      `;
+
+      setTimeout(()=> drawProjectDecisionChart(document.getElementById("projDecisionChart"), p), 0);
+    }
+
+    // ===================== SMALL PARTS =====================
+    function fileCard(f){
+      const ext = (f.type || f.name.split(".").pop() || "").toLowerCase();
+      const color = ext==="pdf" ? "text-rose-600" : ext==="xlsx" ? "text-emerald-600" : "text-blue-600";
+      const label = ext.toUpperCase();
+      return `
+        <li class="rounded-xl border border-slate-200 p-3 flex items-center gap-3 bg-white">
+          <span class="file-icon ${color}" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" class="size-6" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/>
+              <path d="M14 2v6h6"/>
+            </svg>
+          </span>
+          <div class="min-w-0">
+            <div class="text-sm font-medium truncate">${f.name}</div>
+            <div class="text-xs text-slate-500">${label}${f.size?` • ${f.size}`:""}</div>
+          </div>
+          <a href="${f.url}" class="ml-auto inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs hover:bg-slate-50">
+            Lihat
+            <svg class="size-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="m13 5 7 7-7 7v-4H4v-6h9z"/></svg>
+          </a>
+        </li>
+      `;
+    }
+
+    // ===================== HEADER INTERACTIONS & INIT =====================
+    $("#brandBtn")?.addEventListener("click", ()=> location.hash = "#/");
+    const menuBtn = $("#menuBtn");
+    const mobileMenu = $("#mobileMenu");
+    menuBtn?.addEventListener("click", ()=>{
+      const open = mobileMenu.classList.toggle("hidden");
+      menuBtn.setAttribute("aria-expanded", String(!open));
+    });
+
+    const globalSearch = $("#globalSearch");
+    const globalSearchMobile = $("#globalSearchMobile");
+    const pipeSearch = (value) => {
+      if(location.hash !== "#/companies") location.hash = "#/companies";
+      setTimeout(()=>{
+        const input = $("#companySearch");
+        if(input){ input.value = value; input.dispatchEvent(new Event("input", {bubbles:true})); }
+      }, 0);
+    };
+    globalSearch?.addEventListener("input", debounce(e=>pipeSearch(e.target.value),300));
+    globalSearchMobile?.addEventListener("input", debounce(e=>pipeSearch(e.target.value),300));
+
+    window.addEventListener("hashchange", router);
+    window.addEventListener("load", ()=>{
+      router();
+      const recalcCharts = () => {
+        if(location.hash==="#/" || location.hash==="" ) setTimeout(drawConsistencyChart, 0);
+      };
+      window.addEventListener("resize", debounce(recalcCharts, 120));
+      globalSearch?.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ location.hash="#/companies"; }});
+      globalSearchMobile?.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ location.hash="#/companies"; }});
+    });
+  </script>
+</body>
+</html>
