@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ESG Report – Role Approval • Quest</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{
+      --bg:#f6f8fb; --card:#ffffff; --border:#e6e8ee;
+      --ink:#0f172a; --muted:#64748b;
+      --brand:#1d4ed8; --brand-600:#1d4ed8; --brand-700:#1e40af;
+      --emerald:#10b981; --rose:#ef4444; --amber:#f59e0b;
+    }
+    html,body{background:var(--bg); color:var(--ink);}
+    .glass{background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.78)); backdrop-filter:saturate(1.15) blur(8px);}
+    .card{border:1px solid var(--border); background:var(--card); border-radius:18px;}
+    .soft-shadow{box-shadow:0 2px 8px rgba(16,24,40,.04), 0 16px 32px rgba(2,6,23,.06);}
+    .nav-link{padding:.5rem .75rem; border-radius:10px;}
+    .nav-active{background:#eef2ff; color:#1e40af; font-weight:600;}
+    .badge{display:inline-flex; align-items:center; gap:.35rem; padding:.25rem .6rem; font-size:.72rem; border-radius:9999px; border:1px solid var(--border); white-space:nowrap;}
+    .pill{display:inline-flex; align-items:center; gap:.35rem; padding:.25rem .55rem; font-size:.72rem; border-radius:8px;}
+    .locked{opacity:.6; filter:grayscale(20%);}
+    .status-dot{width:8px; height:8px; border-radius:50%;}
+    .btn{display:inline-flex; align-items:center; gap:.5rem; border-radius:12px; font-weight:600;}
+    .btn-primary{background:var(--brand-600); color:#fff; padding:.6rem 1rem;}
+    .btn-primary:hover{background:var(--brand-700);}
+    .btn-ghost{border:1px solid var(--border); background:#fff; padding:.6rem 1rem;}
+    .status-btn{border:1px solid var(--border); padding:.35rem .65rem; border-radius:.6rem; font-size:.75rem;}
+    .status-btn[disabled]{opacity:.45; cursor:not-allowed;}
+    .segmented button{border:1px solid var(--border); padding:.35rem .65rem; border-radius:.6rem; font-size:.8rem;}
+    .segmented .on{background:#1d4ed8; color:#fff; border-color:#1d4ed8;}
+    .toast{position:fixed; right:16px; bottom:16px; padding:.6rem .9rem; background:#0ea5e9; color:#fff; border-radius:.75rem; box-shadow:0 8px 24px rgba(2,6,23,.15); opacity:0; transform:translateY(10px); transition:all .2s; z-index:60;}
+    .toast.show{opacity:1; transform:translateY(0);}
+    /* Modal */
+    .modal-overlay{
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      background:rgba(2,6,23,.45); backdrop-filter:blur(8px) saturate(1.1);
+      opacity:0; pointer-events:none; transition:opacity .18s ease-out; z-index:50;
+    }
+    .modal-overlay.show{opacity:1; pointer-events:auto;}
+    .modal{
+      width:min(880px,92vw); max-height:85vh; overflow:auto;
+      transform:translateY(8px) scale(.98); opacity:0;
+      transition:transform .18s ease-out, opacity .18s ease-out;
+    }
+    .modal-overlay.show .modal{transform:translateY(0) scale(1); opacity:1;}
+    .avatar{inline-size:36px; block-size:36px; border-radius:50%; display:inline-grid; place-items:center; font-weight:700;}
+  </style>
+</head>
+<body class="antialiased">
+  <!-- NAVBAR -->
+  <header class="sticky top-0 z-40 glass border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
+      <button id="brandBtn" class="inline-flex items-center gap-2 text-sm rounded-lg border border-slate-200 px-2.5 py-1.5 bg-white hover:bg-slate-50">
+        ESG • Role Approval
+      </button>
+      <nav class="ml-2 hidden sm:flex gap-1 text-sm" id="tabs">
+        <a href="#/" data-route="#/" class="nav-link nav-active">Beranda</a>
+        <a href="#/approvals" data-route="#/approvals" class="nav-link">Butuh Approval</a>
+        <a href="#/companies" data-route="#/companies" class="nav-link">Companies</a>
+        <a href="#/arsip" data-route="#/arsip" class="nav-link">Arsip</a>
+      </nav>
+      <div class="ml-auto flex items-center gap-2">
+        <span class="hidden sm:inline text-xs text-slate-600">Anda</span>
+        <span class="avatar bg-blue-100 text-blue-700 ring-1 ring-blue-200">AU</span>
+        <span class="pill bg-blue-50 text-blue-700">Auditor</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- APP -->
+  <main id="app" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"></main>
+  <div id="toast" class="toast" role="status" aria-live="polite">Tersimpan ✓</div>
+
+  <!-- MODAL -->
+  <div id="modalHost" class="modal-overlay" aria-hidden="true">
+    <div class="modal card soft-shadow bg-white p-0" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+        <h3 id="modalTitle" class="text-lg font-semibold">Detail</h3>
+        <button id="modalClose" class="btn-ghost rounded-lg px-3 py-1.5 text-sm">Tutup</button>
+      </div>
+      <div id="modalBody" class="p-5"></div>
+    </div>
+  </div>
+  <script>
+    /* ===================== STATE & DATA ===================== */
+    const CURRENT_ROLE = 'Auditor';
+    const STORAGE_KEY = 'esg_role_approval_data_v2';
+
+    function deepCopy(o) { return JSON.parse(JSON.stringify(o)); }
+
+    const ORIGINAL_DATA = {
+      companies: [
+        {
+          id: "comp-a",
+          name: "PT Alpha Energi",
+          sector: "Energi Terbarukan",
+          location: "Jakarta",
+          quality: { employees: 82, company: 88 },
+          projects: [
+            {
+              id: "proj-1",
+              name: "Laporan Keberlanjutan 2025",
+              admin: "Gery",
+              createdAt: "2025-01-10",
+              updatedAt: "2025-03-02",
+              deadline: "2025-03-01",
+              team: [{ name: "Gery Pratama", role: "Admin/Owner" }, { name: "Rina M", role: "Analis" }],
+              attachments: [{ name: "draft-v1.pdf", url: "#", type: "pdf", size: "1.2 MB" }],
+              timeline: [
+                {
+                  date: "2025-01-20",
+                  actor: "Gery Pratama",
+                  action: "Submit untuk review",
+                  note: "Ringkasan: pengukuran emisi dan program sosial Q1.",
+                  evidences: [
+                    { type: "pdf", name: "laporan-q1.pdf", url: "#", size: "620 KB" },
+                    { type: "image", name: "grafik-emisi.png", url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='480' height='260'><rect width='100%' height='100%' fill='%23eef2ff'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%231d4ed8' font-size='18'>Grafik Emisi Q1</text></svg>" }
+                  ],
+                  approvals: [
+                    { role: "Pemerintah", status: "ACC", date: "2025-02-20", reason: "Memenuhi regulasi." },
+                    { role: "Dewan Komisaris", status: "ACC", date: "2025-02-22", reason: "Transparansi memadai." },
+                    { role: "Investor", status: "Pending", date: null, reason: "" },
+                    { role: "Auditor", status: "ACC", date: "2025-02-25", reason: "Angka konsisten." }
+                  ]
+                },
+                {
+                  date: "2025-02-15",
+                  actor: "Nadia Putri",
+                  action: "QA & resubmit final",
+                  note: "Perbaikan metodologi inventarisasi emisi & tambah lampiran bukti.",
+                  evidences: [
+                    { type: "docx", name: "metodologi.docx", url: "#", size: "110 KB" },
+                    { type: "image", name: "foto-audit.jpg", url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='480' height='260'><rect width='100%' height='100%' fill='%23ecfeff'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23089' font-size='18'>Foto Audit</text></svg>" }
+                  ],
+                  approvals: [
+                    { role: "Pemerintah", status: "ACC", date: "2025-02-26", reason: "Final OK." },
+                    { role: "Dewan Komisaris", status: "ACC", date: "2025-02-26", reason: "OK." },
+                    { role: "Investor", status: "Pending", date: null, reason: "" },
+                    { role: "Auditor", status: "ACC", date: "2025-02-27", reason: "OK." }
+                  ]
+                }
+              ]
+            },
+            {
+              id: "proj-2",
+              name: "Audit Emisi Scope 1–3",
+              admin: "Gery",
+              createdAt: "2025-04-02",
+              updatedAt: "2025-04-18",
+              deadline: "2025-05-15",
+              team: [{ name: "Rama Wijaya", role: "Auditor Internal" }],
+              attachments: [{ name: "rencana-audit.docx", url: "#", type: "docx", size: "320 KB" }],
+              timeline: [
+                {
+                  date: "2025-04-05",
+                  actor: "Rama Wijaya",
+                  action: "Susun rencana audit awal",
+                  note: "Scope awal dan sampling data pabrik.",
+                  evidences: [
+                    { type: "pdf", name: "rencana-awal.pdf", url: "#", size: "300 KB" },
+                    { type: "image", name: "anomali.png", url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='480' height='260'><rect width='100%' height='100%' fill='%23fee2e2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23b91c1c' font-size='18'>Grafik Anomali</text></svg>" }
+                  ],
+                  approvals: [
+                    { role: "Pemerintah", status: "ACC", date: "2025-04-08", reason: "Rencana jelas." },
+                    { role: "Dewan Komisaris", status: "Ditolak", date: "2025-04-09", reason: "Perlu revisi KPI." },
+                    { role: "Investor", status: "Pending", date: null, reason: "" },
+                    { role: "Auditor", status: "Pending", date: null, reason: "" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          id: "comp-b",
+          name: "PT Beta Industri",
+          sector: "Manufaktur",
+          location: "Surabaya",
+          quality: { employees: 74, company: 71 },
+          projects: [
+            {
+              id: "b-proj-1",
+              name: "Upgrade IPAL Limbah Cair",
+              admin: "Dina",
+              createdAt: "2025-02-10",
+              updatedAt: "2025-06-05",
+              deadline: "2025-06-01",
+              attachments: [{ name: "desain-instalasi.pdf", url: "#", type: "pdf", size: "1.1 MB" }],
+              timeline: [
+                {
+                  date: "2025-05-28",
+                  actor: "Dina Kartika",
+                  action: "Submit untuk review",
+                  note: "Hasil uji beban & baku mutu terbaru.",
+                  evidences: [
+                    { type: "pdf", name: "uji-baku-mutu.pdf", url: "#", size: "540 KB" },
+                    { type: "image", name: "foto-ipal.jpg", url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='480' height='260'><rect width='100%' height='100%' fill='%23f1f5f9'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23586' font-size='18'>Foto IPAL</text></svg>" }
+                  ],
+                  approvals: [
+                    { role: "Pemerintah", status: "ACC", date: "2025-06-03", reason: "Sesuai baku mutu." },
+                    { role: "Dewan Komisaris", status: "ACC", date: "2025-06-04", reason: "OK." },
+                    { role: "Investor", status: "ACC", date: "2025-06-04", reason: "Budget siap." },
+                    { role: "Auditor", status: "Ditolak", date: "2025-06-05", reason: "Temuan uji beban tidak stabil." }
+                  ]
+                }
+              ]
+            },
+            {
+              id: "b-proj-2",
+              name: "Pelatihan K3 Tahap 2",
+              admin: "Dina",
+              createdAt: "2025-01-20",
+              updatedAt: "2025-03-05",
+              deadline: "2025-03-10",
+              attachments: [{ name: "materi-k3.pdf", url: "#", type: "pdf", size: "650 KB" }],
+              timeline: [
+                {
+                  date: "2025-03-05",
+                  actor: "Dina Kartika",
+                  action: "Submit laporan akhir",
+                  note: "Rekap jam pelatihan & jumlah peserta.",
+                  evidences: [
+                    { type: "pdf", name: "rekap-pelatihan.pdf", url: "#", size: "400 KB" },
+                    { type: "image", name: "foto-kelas.jpg", url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='480' height='260'><rect width='100%' height='100%' fill='%23f0fdf4'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23065f46' font-size='18'>Pelatihan K3</text></svg>" }
+                  ],
+                  approvals: [
+                    { role: "Pemerintah", status: "ACC", date: "2025-03-08", reason: "Program sesuai standar." },
+                    { role: "Dewan Komisaris", status: "ACC", date: "2025-03-08", reason: "OK." },
+                    { role: "Investor", status: "ACC", date: "2025-03-09", reason: "Nilai tambah SDM." },
+                    { role: "Auditor", status: "ACC", date: "2025-03-09", reason: "Dokumen lengkap." }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    // ====== Persistence
+    let DATA = null;
+    function sanitizeData(d) {
+      let out = (d && typeof d === 'object') ? deepCopy(d) : deepCopy(ORIGINAL_DATA);
+      if (!out || typeof out !== 'object') out = deepCopy(ORIGINAL_DATA);
+      if (!Array.isArray(out.companies)) out.companies = [];
+      out.companies.forEach(c => {
+        if (!Array.isArray(c.projects)) c.projects = [];
+        c.projects.forEach(p => ensureMinReports(p));
+      });
+      return out;
+    }
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : deepCopy(ORIGINAL_DATA);
+        DATA = sanitizeData(parsed);
+      } catch (e) { DATA = sanitizeData(ORIGINAL_DATA); }
+    }
+    function toast(msg) { const t = document.getElementById('toast'); if (!t) return; t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1400); }
+
+    /* ===================== HELPERS ===================== */
+    const $ = (sel, ctx = document) => ctx.querySelector(sel);
+    const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+    const ROLE_ORDER = ["Pemerintah", "Dewan Komisaris", "Investor", "Auditor"];
+
+    const statusBadge = (s) => {
+      const map = {
+        "ACC": "bg-emerald-50 text-emerald-700",
+        "Pending": "bg-amber-50 text-amber-700",
+        "Ditolak": "bg-rose-50 text-rose-700"
+      };
+      return `<span class="badge ${map[s] || 'bg-slate-50 text-slate-700'}">${s}</span>`;
+    };
+    const projectBadge = (s) => {
+      const map = {
+        "Konsisten": "bg-emerald-50 text-emerald-700",
+        "Tidak konsisten": "bg-rose-50 text-rose-700",
+        "Menunggu": "bg-amber-50 text-amber-700"
+      };
+      return `<span class="badge ${map[s] || 'bg-slate-50 text-slate-700'}">${s}</span>`;
+    };
+
+    const formatDate = (iso) => {
+      if (!iso) return "-";
+      const d = new Date(iso + "T00:00:00");
+      return d.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+    };
+
+    function defaultApprovalSet() {
+      return ROLE_ORDER.map(r => ({ role: r, status: 'Pending', date: null, reason: '', reasonImage: null }));
+    }
+
+    function ensureStepEvidence(step, idx) {
+      step.note = step.note || `Ringkasan laporan #${idx + 1}.`;
+      step.evidences = Array.isArray(step.evidences) ? step.evidences : [];
+      if (!step.evidences.length) {
+        // minimal 1 doc + 1 image
+        step.evidences.push({ type: "pdf", name: `lampiran-${idx + 1}.pdf`, url: "#", size: "200 KB" });
+        step.evidences.push({ type: "image", name: `bukti-${idx + 1}.png`, url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='420' height='220'><rect width='100%' height='100%' fill='%23eef2ff'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%231d4ed8' font-size='16'>Bukti Laporan</text></svg>" });
+      }
+    }
+
+    function ensureMinReports(p) {
+      if (!Array.isArray(p.timeline)) p.timeline = [];
+      p.timeline.sort((a, b) => new Date(a.date) - new Date(b.date));
+      // ensure approvals & evidence exist
+      p.timeline.forEach((s, i) => { s.approvals = Array.isArray(s.approvals) ? s.approvals : defaultApprovalSet(); ensureStepEvidence(s, i); });
+      while (p.timeline.length < 3) {
+        const lastDate = p.timeline.length ? new Date(p.timeline[p.timeline.length - 1].date + "T00:00:00") : new Date((p.createdAt || new Date().toISOString().slice(0, 10)) + "T00:00:00");
+        const next = new Date(lastDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+        p.timeline.push({
+          date: next.toISOString().slice(0, 10),
+          actor: p.admin || 'System',
+          action: 'Laporan tambahan',
+          note: 'Ringkasan otomatis.',
+          evidences: [
+            { type: "pdf", name: "lampiran.pdf", url: "#", size: "220 KB" },
+            { type: "image", name: "bukti.png", url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='420' height='220'><rect width='100%' height='100%' fill='%23f1f5f9'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23586' font-size='16'>Bukti</text></svg>" }
+          ],
+          approvals: defaultApprovalSet()
+        });
+      }
+    }
+
+    function getLatestStep(p) {
+      return (p.timeline || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date)).pop();
+    }
+
+    function computeOverallStatusFromApprovals(approvals = []) {
+      const hasReject = approvals.some(a => a.status === "Ditolak");
+      const allAcc = approvals.length > 0 && approvals.every(a => a.status === "ACC");
+      if (allAcc) return "ACC";
+      if (hasReject) return "Ditolak";
+      return "Pending";
+    }
+
+    function gatherProjectDecisionStats(p) {
+      let acc = 0, reject = 0, pending = 0;
+      (p.timeline || []).forEach(step => {
+        (step.approvals || []).forEach(a => {
+          if (a.status === "ACC") acc++;
+          else if (a.status === "Ditolak") reject++;
+          else pending++;
+        });
+      });
+      return { acc, reject, pending, decided: acc + reject, total: acc + reject + pending };
+    }
+
+    // Derive project status from all report decisions
+    function computeProjectConsistencyStatus(p) {
+      const s = gatherProjectDecisionStats(p);
+      if (s.decided === 0) return "Menunggu";
+      const rejectRatio = s.reject / Math.max(1, s.decided);
+      return (rejectRatio >= 0.5) ? "Tidak konsisten" : "Konsisten";
+    }
+
+    function nextActionRole(approvals) {
+      const ordered = approvals.slice().sort((a, b) => ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role));
+      for (const a of ordered) { if (a.status !== "ACC") return a.role; }
+      return null;
+    }
+    function applyCascadingLock(approvals = []) {
+      const ordered = approvals.slice().sort((a, b) => ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role));
+      let rejected = false;
+      return ordered.map(a => {
+        const wasRejected = rejected;
+        if (a.status === "Ditolak") rejected = true;
+        return { ...a, _lockedAfterReject: wasRejected };
+      });
+    }
+    function markActiveRole(approvals) {
+      const ordered = applyCascadingLock(approvals);
+      const active = nextActionRole(ordered);
+      return ordered.map(a => ({ ...a, _active: a.role === active }));
+    }
+
+    // Company insights
+    function finalApprovalDate(p) {
+      const last = getLatestStep(p); if (!last) return null;
+      const status = computeOverallStatusFromApprovals(last.approvals || []);
+      if (status !== "ACC") return null;
+      const dates = (last.approvals || []).filter(a => a.status === "ACC" && a.date).map(a => new Date(a.date + "T00:00:00"));
+      if (!dates.length) return null; return new Date(Math.max(...dates.map(d => d.getTime())));
+    }
+    const today = new Date();
+    const atEndOfDay = (iso) => new Date(iso + "T23:59:59");
+    function isLate(p) { if (!p.deadline) return false; const due = atEndOfDay(p.deadline); const last = getLatestStep(p); const overall = computeOverallStatusFromApprovals(last?.approvals || []); if (overall === "ACC") { const fin = finalApprovalDate(p); return fin ? fin > due : today > due; } return today > due; }
+    function lateDays(p) { if (!p.deadline) return 0; const due = atEndOfDay(p.deadline).getTime(); let ref; const last = getLatestStep(p); const overall = computeOverallStatusFromApprovals(last?.approvals || []); if (overall === "ACC") { const fin = finalApprovalDate(p); ref = fin ? fin.getTime() : today.getTime(); } else { ref = today.getTime(); } const diff = Math.floor((ref - due) / (1000 * 60 * 60 * 24)); return diff > 0 ? diff : 0; }
+    function isFailed(p) { const s = computeProjectConsistencyStatus(p); return s === "Tidak konsisten"; }
+
+    function companyStats(c) {
+      const projects = c.projects || [];
+      const late = projects.filter(isLate).length;
+      const failed = projects.filter(isFailed).length;
+      // "consistency" = % proyek dengan status "Konsisten"
+      const consistent = projects.filter(p => computeProjectConsistencyStatus(p) === "Konsisten").length;
+      const consistency = projects.length ? Math.round(consistent / projects.length * 100) : 0;
+      const inconsistency = 100 - consistency;
+      return { late, failed, consistency, inconsistency, total: projects.length, consistent };
+    }
+
+    function computeCompanyESGInsights(company) {
+      const projs = company.projects || []; const nameHas = (p, kws) => kws.some(k => (p.name || '').toLowerCase().includes(k));
+      const envWaste = projs.filter(p => nameHas(p, ["ipal", "limbah", "waste"]))?.length || 0;
+      const envEmission = projs.filter(p => nameHas(p, ["emisi", "emission", "scope"]))?.length || 0;
+      const envRenew = projs.filter(p => nameHas(p, ["plts", "surya", "retrofit", "euro 6", "rute hijau", "green"]))?.length || 0;
+      const socTraining = projs.filter(p => nameHas(p, ["pelatihan", "k3", "literasi", "csr"]))?.length || 0;
+      const socCommunity = projs.filter(p => nameHas(p, ["desa", "reforestasi", "kampanye"]))?.length || 0;
+      const employeesScore = company?.quality?.employees ?? "-";
+      const accProj = projs.filter(p => computeProjectConsistencyStatus(p) === "Konsisten").length;
+      const onTime = projs.filter(p => finalApprovalDate(p) && p.deadline && finalApprovalDate(p) <= atEndOfDay(p.deadline)).length;
+      const late = projs.filter(isLate).length; const failed = projs.filter(isFailed).length;
+      const total = projs.length || 1;
+      return { env: { waste: envWaste, emission: envEmission, renewable: envRenew }, soc: { training: socTraining, community: socCommunity, employeesScore }, comp: { accRate: Math.round(accProj / total * 100), onTimeRate: Math.round(onTime / total * 100), late, failed } };
+    }
+
+    /* ===================== UI HELPERS ===================== */
+    function highlightNav(current) {
+      $$('#tabs a[data-route]').forEach(a => {
+        if (a.dataset.route === current) { a.classList.add('nav-active'); }
+        else a.classList.remove('nav-active');
+      });
+    }
+
+    function openModal(title, html) {
+      $('#modalTitle').textContent = title;
+      $('#modalBody').innerHTML = html;
+      $('#modalHost').style.display = 'flex';
+    }
+    function closeModal() { $('#modalHost').style.display = 'none'; }
+
+    $('#modalClose').addEventListener('click', closeModal);
+    $('#modalHost').addEventListener('click', (e) => { if (e.target.id === 'modalHost') closeModal(); });
+
+    /* ===================== HOME ===================== */
+    function miniCard(label, value) {
+      return `<div class="rounded-2xl border border-slate-200 bg-white p-4 soft-shadow">
+    <div class="text-xs text-slate-600">${label}</div>
+    <div class="mt-1 text-xl font-semibold">${value}</div>
+  </div>`;
+    }
+
+    function renderHome() {
+      const allSteps = (DATA?.companies || []).flatMap(c => (c.projects || []).map(p => ({ c, p, last: getLatestStep(p) })));
+      const approvals = allSteps.flatMap(x => (x.last?.approvals || []).map(a => ({ ...a, _company: x.c.name, _project: x.p.name, _projectId: x.p.id, _companyId: x.c.id, _step: x.last })));
+      const pending = approvals.filter(a => a.status === "Pending").length;
+      const acc = approvals.filter(a => a.status === "ACC").length;
+      const reject = approvals.filter(a => a.status === "Ditolak").length;
+      const total = approvals.length;
+
+      const topProjects = (DATA?.companies || []).flatMap(c => (c.projects || []).map(p => ({ c, p, score: gatherProjectDecisionStats(p).reject })))
+        .sort((a, b) => b.score - a.score).slice(0, 6);
+
+      $('#app').innerHTML = `
+    <section class="space-y-6">
+      <header class="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-blue-50 to-indigo-50 soft-shadow p-6">
+        <div class="absolute right-0 -top-24 w-[540px] h-[540px] bg-blue-200/40 rounded-full blur-3xl"></div>
+        <div class="absolute -left-16 -bottom-16 w-[420px] h-[420px] bg-indigo-200/40 rounded-full blur-3xl"></div>
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/70 px-3 py-1 text-xs text-blue-700">Role Approval • Auditor</div>
+            <h1 class="mt-2 text-2xl font-semibold">Beranda</h1>
+            <p class="mt-1 text-slate-600 max-w-2xl">Pantau status laporan terbaru, proyek paling berisiko (banyak Ditolak), dan lompat ke tindakan yang menunggu Anda.</p>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <a href="#/approvals" class="btn btn-primary">Butuh Approval Saya</a>
+              <a href="#/companies" class="btn btn-ghost">Lihat Companies</a>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 w-full lg:w-auto">
+            ${miniCard('Pending', pending)}
+            ${miniCard('ACC', acc)}
+            ${miniCard('Ditolak', reject)}
+            ${miniCard('Total', total)}
+          </div>
+        </div>
+      </header>
+
+      <section class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">Proyek Risiko Tinggi (banyak Ditolak)</h3>
+          <a class="text-sm text-blue-700 hover:underline" href="#/companies">Browse semua proyek →</a>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          ${topProjects.map(({ c, p }) => projectCard(c, p, true)).join('')}
+        </div>
+      </section>
+    </section>`;
+    }
+
+    /* ===================== APPROVALS (Cards, not table) ===================== */
+    function approvalsCard(it) {
+      const step = it.step;
+      const ev = (step.evidences || []);
+      const thumbs = ev.slice(0, 2).map(e => e.type === 'image'
+        ? `<img alt="${e.name}" src="${e.url}" class="w-16 h-16 object-cover rounded-md border border-slate-200"/>`
+        : `<span class="inline-flex items-center justify-center w-16 h-16 rounded-md border border-slate-200 text-xs bg-white">${(e.type || 'DOC').toUpperCase()}</span>`
+      ).join('');
+      return `
+    <div class="card soft-shadow p-4">
+      <div class="flex items-start gap-3">
+        <div class="avatar bg-blue-100 text-blue-700 ring-1 ring-blue-200">AU</div>
+        <div class="min-w-0">
+          <div class="text-sm text-slate-500">${it.c.name}</div>
+          <div class="font-medium">${it.p.name}</div>
+          <div class="text-xs text-slate-500">Laporan #${it.stepIndex + 1} • ${formatDate(step.date)}</div>
+        </div>
+        <span class="ml-auto pill bg-amber-50 text-amber-700">Menunggu Anda</span>
+      </div>
+      <p class="mt-3 text-sm text-slate-700 line-clamp-2">${step.note || '-'}</p>
+      <div class="mt-3 flex gap-2">${thumbs}</div>
+      <div class="mt-4 flex justify-end">
+        <a href="#/company/${it.c.id}/project/${it.p.id}" class="btn btn-primary">Buka & Approve</a>
+      </div>
+    </div>`;
+    }
+
+    function renderApprovals() {
+      const items = [];
+      (DATA?.companies || []).forEach(c => {
+        (c.projects || []).forEach(p => {
+          ensureMinReports(p);
+          (p.timeline || []).forEach((step, si) => {
+            const active = nextActionRole(step.approvals || []);
+            if (active === CURRENT_ROLE) {
+              items.push({ c, p, stepIndex: si, step });
+            }
+          });
+        });
+      });
+
+      $('#app').innerHTML = `
+    <section class="space-y-4">
+      <header class="card soft-shadow p-5 bg-gradient-to-br from-white to-slate-50">
+        <h1 class="text-xl font-semibold">Butuh Approval Saya</h1>
+        <p class="text-slate-600 text-sm mt-1">Menampilkan laporan yang gilirannya <span class="font-medium">${CURRENT_ROLE}</span>.</p>
+      </header>
+      <section>
+        ${items.length ? `<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">${items.map(approvalsCard).join('')}</div>`
+          : `<div class="card p-6 text-sm text-slate-500">Tidak ada yang menunggu Anda.</div>`}
+      </section>
+    </section>`;
+    }
+
+    /* ===================== COMPANIES ===================== */
+    function projectCard(c, p, compact = false) {
+      const stat = computeProjectConsistencyStatus(p);
+      const { acc, reject, pending, decided, total } = gatherProjectDecisionStats(p);
+      const late = isLate(p); const ld = lateDays(p);
+      const badge = projectBadge(stat);
+      const clickable = stat === "Tidak konsisten" ? 'data-click="inconsistency"' : '';
+      return `
+    <div class="card soft-shadow ${compact ? 'p-4' : 'p-5'}">
+      <div class="flex items-start gap-3">
+        <div class="min-w-0">
+          <div class="text-sm text-slate-500">${c.name}</div>
+          <div class="font-medium">${p.name}</div>
+          <div class="text-xs text-slate-500">Mulai ${formatDate(p.createdAt)} • Update ${formatDate(p.updatedAt)}</div>
+        </div>
+        <button class="ml-auto" ${clickable} data-company="${c.id}" data-project="${p.id}" title="${stat}">
+          ${badge}
+        </button>
+      </div>
+      <div class="mt-3 grid grid-cols-3 gap-2 text-xs">
+        <div class="rounded-lg border border-slate-200 p-2"><div class="text-slate-500">ACC</div><div class="font-semibold">${acc}</div></div>
+        <div class="rounded-lg border border-slate-200 p-2"><div class="text-slate-500">Ditolak</div><div class="font-semibold">${reject}</div></div>
+        <div class="rounded-lg border border-slate-200 p-2"><div class="text-slate-500">Pending</div><div class="font-semibold">${pending}</div></div>
+      </div>
+      <div class="mt-3 flex items-center gap-2 text-xs">
+        <span class="text-slate-500">Deadline:</span><span class="font-medium">${formatDate(p.deadline)}</span>
+        ${late ? `<span class="pill bg-rose-50 text-rose-700">Telat ${ld} hari</span>` : `<span class="pill bg-emerald-50 text-emerald-700">On track</span>`}
+      </div>
+      <div class="mt-4 flex justify-end">
+        <a class="btn btn-ghost" href="#/company/${c.id}">Company</a>
+        <a class="btn btn-primary" href="#/company/${c.id}/project/${p.id}">Detail</a>
+      </div>
+    </div>`;
+    }
+
+    function companyHero(c, st) {
+      return `
+    <header class="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-indigo-50 soft-shadow p-6">
+      <div class="absolute right-0 -top-24 w-[420px] h-[420px] bg-blue-200/40 rounded-full blur-3xl"></div>
+      <div class="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <nav class="text-sm text-slate-500 mb-1"><a class="hover:underline" href="#/">Home</a> / <span class="text-slate-700">${c.name}</span></nav>
+          <h1 class="text-xl sm:text-2xl font-semibold">${c.name}</h1>
+          <p class="text-slate-600">${c.sector} • ${c.location}</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <span class="pill bg-emerald-50 text-emerald-700">Konsisten ${st.consistency}%</span>
+            <span class="pill bg-rose-50 text-rose-700">Tidak konsisten ${st.inconsistency}%</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-3 w-full sm:w-auto">
+          ${miniMetric('Project', st.total)}
+          ${miniMetric('Konsisten', st.consistent)}
+          ${miniMetric('Terlambat', st.late)}
+          ${miniMetric('Gagal', st.failed)}
+          ${miniMetric('Skor Karyawan', c.quality?.employees ?? '-')}
+          ${miniMetric('Skor Perusahaan', c.quality?.company ?? '-')}
+        </div>
+      </div>
+    </header>`;
+    }
+
+    function miniMetric(label, value) {
+      return `<div class="rounded-xl border border-slate-200 p-3 bg-white"><div class="text-xs text-slate-600">${label}</div><div class="text-lg font-semibold">${value}</div></div>`;
+    }
+
+    function renderCompanies() {
+      const list = DATA?.companies || [];
+      $('#app').innerHTML = `
+    <section class="space-y-6">
+      <header class="card soft-shadow p-5 bg-gradient-to-br from-white to-slate-50">
+        <h1 class="text-xl sm:text-2xl font-semibold">Companies</h1>
+        <p class="text-slate-600">Pilih perusahaan untuk melihat ringkasan ESG dan proyek.</p>
+      </header>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        ${list.map(c => companyTile(c)).join('')}
+      </div>
+    </section>`;
+    }
+
+    function companyTile(c) {
+      const st = companyStats(c);
+      return `<button class="text-left card soft-shadow p-4 hover:border-blue-300 hover:shadow-md transition" onclick="location.hash='#/company/${c.id}'">
+    <div class="font-medium">${c.name}</div>
+    <div class="text-sm text-slate-600">${c.sector} • ${c.location}</div>
+    <div class="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
+      <span>${st.total} project</span>
+      <span>• ${st.consistent} konsisten</span>
+      <span>• ${st.late} telat</span>
+      <span>• ${st.failed} tidak konsisten</span>
+    </div>
+  </button>`;
+    }
+
+    /* ===================== COMPANY DETAIL ===================== */
+    function renderCompany(companyId) {
+      const c = (DATA?.companies || []).find(x => x.id === companyId);
+      if (!c) { $('#app').innerHTML = `<p>Perusahaan tidak ditemukan.</p>`; return; }
+
+      const st = companyStats(c);
+      const insights = computeCompanyESGInsights(c);
+
+      $('#app').innerHTML = `
+    <section class="space-y-6">
+      ${companyHero(c, st)}
+
+      <section class="grid lg:grid-cols-3 gap-4">
+        <article class="card soft-shadow p-5 bg-white">
+          <h2 class="font-semibold">Lingkungan</h2>
+          <p class="text-sm text-slate-600 mt-1">Pengelolaan limbah, emisi, dan energi terbarukan.</p>
+          <ul class="mt-3 text-sm text-slate-700 space-y-2">
+            <li>• Proyek Limbah/IPAL: <span class="font-medium">${insights.env.waste}</span></li>
+            <li>• Proyek Emisi/Scope: <span class="font-medium">${insights.env.emission}</span></li>
+            <li>• Energi Terbarukan/Green Ops: <span class="font-medium">${insights.env.renewable}</span></li>
+          </ul>
+          <div class="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">Lengkapi data emisi & water footprint per pabrik (CSV) untuk tren kuartalan.</div>
+        </article>
+        <article class="card soft-shadow p-5 bg-white">
+          <h2 class="font-semibold">Sosial</h2>
+          <p class="text-sm text-slate-600 mt-1">Tenaga kerja & kontribusi pada masyarakat.</p>
+          <ul class="mt-3 text-sm text-slate-700 space-y-2">
+            <li>• Indeks Karyawan: <span class="font-medium">${c.quality?.employees ?? '-'}</span></li>
+            <li>• Program Pelatihan/K3/CSR: <span class="font-medium">${insights.soc.training}</span></li>
+            <li>• Kegiatan Komunitas: <span class="font-medium">${insights.soc.community}</span></li>
+          </ul>
+          <div class="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">Tambahkan metrik jam pelatihan/pegawai & penerima manfaat.</div>
+        </article>
+        <article class="card soft-shadow p-5 bg-white">
+          <h2 class="font-semibold">Kepatuhan & Regulasi</h2>
+          <p class="text-sm text-slate-600 mt-1">Standar, regulasi dan ketepatan waktu pelaporan.</p>
+          <ul class="mt-3 text-sm text-slate-700 space-y-2">
+            <li>• Proyek Konsisten: <span class="font-medium">${st.consistent}/${st.total}</span></li>
+            <li>• ACC Tepat Waktu: <span class="font-medium">${insights.comp.onTimeRate}%</span></li>
+            <li>• Terlambat: <span class="font-medium">${insights.comp.late}</span> • Tidak Konsisten: <span class="font-medium">${insights.comp.failed}</span></li>
+          </ul>
+          <div class="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Evaluasi kesenjangan GRI / POJK 51 / ISO 14001 / ISO 45001.</div>
+        </article>
+      </section>
+
+      <section class="space-y-3">
+        <h2 class="font-semibold">Projects</h2>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          ${c.projects.map(p => projectCard(c, p, false)).join('')}
+        </div>
+      </section>
+    </section>`;
+
+      // wire modal trigger for inconsistency
+      $$('#app [data-click="inconsistency"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pid = btn.dataset.project; const cid = btn.dataset.company;
+          const comp = DATA.companies.find(x => x.id === cid); const proj = comp?.projects.find(x => x.id === pid);
+          if (!proj) return;
+          const rows = (proj.timeline || []).map((step, i) => {
+            const rejects = (step.approvals || []).filter(a => a.status === "Ditolak");
+            if (!rejects.length) return '';
+            const evHtml = (step.evidences || []).slice(0, 3).map(e => e.type === 'image'
+              ? `<img src="${e.url}" alt="${e.name}" class="w-14 h-14 object-cover rounded-md border border-slate-200"/>`
+              : `<span class="inline-flex items-center justify-center w-14 h-14 rounded-md border border-slate-200 text-[10px] bg-white">${(e.type || 'DOC').toUpperCase()}</span>`
+            ).join('');
+            const reasons = rejects.map(a => `
+          <li class="rounded-lg border border-slate-200 p-3">
+            <div class="flex items-center justify-between">
+              <div class="text-sm font-medium">${a.role}</div>
+              ${statusBadge(a.status)}
+            </div>
+            <div class="text-xs text-slate-500 mt-1">${a.date ? formatDate(a.date) : '-'}</div>
+            ${a.reason ? `<p class="text-sm mt-2">${a.reason}</p>` : ''}
+            ${a.reasonImage ? `<figure class="mt-2"><img src="${a.reasonImage.url}" alt="${a.reasonImage.alt || 'Bukti'}" class="w-full h-36 object-cover rounded-md border"/></figure>` : ''}
+          </li>`).join('');
+
+            return `
+          <section class="p-4 rounded-xl border border-slate-200 bg-white">
+            <div class="flex items-center justify-between">
+              <div class="font-semibold">Laporan #${i + 1} • ${step.action || 'Submission'}</div>
+              <div class="text-xs text-slate-500">${formatDate(step.date)}</div>
+            </div>
+            <p class="text-sm text-slate-700 mt-1">${step.note || ''}</p>
+            <div class="mt-3 flex gap-2">${evHtml}</div>
+            <ul class="mt-3 grid sm:grid-cols-2 gap-2">${reasons}</ul>
+          </section>`;
+          }).filter(Boolean).join('');
+
+          openModal('Alasan Penolakan • ' + proj.name, rows || `<p class="text-sm text-slate-600">Tidak ada penolakan pada laporan-laporan proyek ini.</p>`);
+        });
+      });
+    }
+
+    /* ===================== PROJECT DETAIL (approval per laporan) ===================== */
+    const PROJECT_FILTER = {}; // 'mine' | 'all'
+
+    function renderReportApproval(c, p, step, idx) {
+      const approvals = step?.approvals || [];
+      const marked = markActiveRole(approvals);
+      const overall = computeOverallStatusFromApprovals(approvals);
+      const activeRole = nextActionRole(approvals);
+      const isYourTurn = (CURRENT_ROLE === activeRole);
+
+      const evThumbs = (step.evidences || []).map(e => {
+        if (e.type === 'image') {
+          return `<figure class="rounded-md overflow-hidden border border-slate-200 bg-white"><img src="${e.url}" alt="${e.name}" class="w-28 h-20 object-cover"/><figcaption class="px-2 py-1 text-[10px] text-slate-600 truncate">${e.name}</figcaption></figure>`;
+        }
+        return `<div class="rounded-md overflow-hidden border border-slate-200 bg-white w-28 h-20 grid place-items-center text-[10px]">${(e.type || 'DOC').toUpperCase()}</div>`;
+      }).slice(0, 4).join('');
+
+      return `
+    <section class="card p-5">
+      <div class="flex flex-wrap items-center gap-3">
+        <h3 class="font-semibold">Laporan #${idx + 1} — ${step.action || 'Submission'} <span class="text-slate-500 font-normal">(${formatDate(step.date)})</span></h3>
+        <div class="ml-auto flex items-center gap-2"><span class="text-sm">Status laporan:</span> ${statusBadge(overall)}</div>
+      </div>
+      ${isYourTurn ? `<div class="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Giliran Anda (<strong>${CURRENT_ROLE}</strong>) untuk memberikan keputusan pada laporan ini.</div>` : ``}
+
+      <div class="mt-3">
+        <div class="text-xs text-slate-500">Ringkasan</div>
+        <p class="text-sm mt-1">${step.note || '-'}</p>
+        <div class="mt-2 flex flex-wrap gap-2">${evThumbs}</div>
+      </div>
+
+      <div class="mt-4 grid md:grid-cols-2 gap-3">
+        ${marked.map(a => {
+        const lockedByReject = a._lockedAfterReject && a.status !== "Ditolak";
+        const canEdit = (a._active && (a.role === CURRENT_ROLE) && !lockedByReject);
+        const reasonType = a.reasonImage ? 'image' : 'text';
+        return `
+            <section class="p-4 border border-slate-200 rounded-xl ${lockedByReject ? 'locked' : ''}" aria-labelledby="appr-${idx}-${a.role}">
+              <div class="flex items-center justify-between">
+                <h4 id="appr-${idx}-${a.role}" class="font-medium">${a.role} ${a._active ? '<span class="ml-1 pill bg-blue-50 text-blue-700">aktif</span>' : ''} ${lockedByReject ? '<span class="ml-1 text-rose-600 text-xs">(terblokir)</span>' : ''}</h4>
+                ${statusBadge(a.status)}
+              </div>
+              <div class="mt-1 grid grid-cols-3 text-sm">
+                <div class="text-slate-500">Tanggal</div>
+                <div class="col-span-2">${a.date ? formatDate(a.date) : "-"}</div>
+              </div>
+
+              <div class="mt-2">
+                <label class="text-xs text-slate-600">Tipe Alasan</label>
+                <select class="reason-type rounded-lg border border-slate-300 px-2 py-1 text-xs" data-step="${idx}" data-role="${a.role}" ${canEdit ? '' : 'disabled'}>
+                  <option value="text" ${reasonType === 'text' ? 'selected' : ''}>Teks</option>
+                  <option value="image" ${reasonType === 'image' ? 'selected' : ''}>Gambar</option>
+                </select>
+              </div>
+
+              <div class="mt-2">
+                <div class="text-sm text-slate-500">Alasan</div>
+                ${reasonType === 'image'
+            ? `<div>
+                      ${a.reasonImage ? `<figure class="mt-2 rounded-lg overflow-hidden border border-slate-200"><img src="${a.reasonImage.url}" alt="${a.reasonImage.alt || ("Bukti " + a.role)}" class="w-full h-40 object-cover"/><figcaption class="p-2 text-xs text-slate-600">${a.reasonImage.alt || 'Bukti'}</figcaption></figure>` : ''}
+                      <input type="file" accept="image/*" class="reason-file mt-2 block w-full text-xs" data-step="${idx}" data-role="${a.role}" ${canEdit ? '' : 'disabled'} />
+                    </div>`
+            : `<textarea class="reason-text mt-1 w-full rounded-lg border border-slate-200 bg-white p-2 text-sm" rows="2" placeholder="Tulis alasan…" data-step="${idx}" data-role="${a.role}" ${canEdit ? '' : 'disabled'}>${a.reason || ""}</textarea>`}
+              </div>
+
+              <div class="mt-3 flex flex-wrap gap-2">
+                ${["ACC", "Pending", "Ditolak"].map(s => `<button data-step="${idx}" data-role="${a.role}" data-status="${s}" class="status-btn ${a.status === s ? 'bg-blue-600 text-white border-blue-600' : ''}" ${canEdit ? '' : 'disabled'}>${s}</button>`).join("")}
+                <button class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 ${canEdit ? '' : 'opacity-50 cursor-not-allowed'} btn-edit" data-step="${idx}" data-role="${a.role}" ${canEdit ? '' : 'disabled'}>Edit</button>
+                <button class="px-2.5 py-1.5 text-xs rounded-lg border border-rose-300 text-rose-700 ${canEdit ? '' : 'opacity-50 cursor-not-allowed'} btn-hapus" data-step="${idx}" data-role="${a.role}" ${canEdit ? '' : 'disabled'}>Hapus</button>
+                <button class="px-2.5 py-1.5 text-xs rounded-lg border border-emerald-300 text-emerald-700 ${canEdit ? '' : 'opacity-50 cursor-not-allowed'} btn-kirim" data-step="${idx}" data-role="${a.role}" ${canEdit ? '' : 'disabled'}>Kirim</button>
+              </div>
+              ${(!canEdit && !lockedByReject) ? `<p class="mt-2 text-xs text-slate-500">Menunggu <strong>ACC</strong> dari role sebelumnya.</p>` : ''}
+              ${lockedByReject ? `<p class="mt-2 text-xs text-rose-700">Terkunci karena ada <strong>Ditolak</strong> sebelumnya.</p>` : ''}
+            </section>`;
+      }).join("")}
+      </div>
+    </section>`;
+    }
+
+    function attachReportHandlers(c, p) {
+      // Change reason type
+      $$('#app .reason-type').forEach(sel => {
+        sel.addEventListener('change', () => {
+          const role = sel.dataset.role; const idx = parseInt(sel.dataset.step, 10);
+          const step = p.timeline[idx]; const it = step.approvals.find(x => x.role === role);
+          if (sel.value === 'image') { it.reasonImage = it.reasonImage || { url: '', alt: '' }; it.reason = ''; }
+          else { it.reasonImage = null; it.reason = it.reason || ''; }
+          renderProject(c.id, p.id); // re-render to update UI
+        });
+      });
+      // Text reason input
+      $$('#app .reason-text').forEach(t => {
+        t.addEventListener('input', () => {
+          const role = t.dataset.role; const idx = parseInt(t.dataset.step, 10);
+          const step = p.timeline[idx]; const it = step.approvals.find(x => x.role === role);
+          it.reason = t.value;
+        });
+      });
+      // File reason input
+      $$('#app .reason-file').forEach(inp => {
+        inp.addEventListener('change', () => {
+          const file = inp.files && inp.files[0]; if (!file) return;
+          const role = inp.dataset.role; const idx = parseInt(inp.dataset.step, 10);
+          const step = p.timeline[idx]; const it = step.approvals.find(x => x.role === role);
+          const fr = new FileReader();
+          fr.onload = () => { it.reasonImage = { url: fr.result, alt: `${role} – Bukti` }; it.reason = ''; renderProject(c.id, p.id); };
+          fr.readAsDataURL(file);
+        });
+      });
+      // Status buttons
+      $$('#app .status-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const role = btn.dataset.role; const status = btn.dataset.status; const idx = parseInt(btn.dataset.step, 10);
+          const step = p.timeline[idx]; const approvals = step.approvals || [];
+          const currentActive = nextActionRole(approvals);
+          if (currentActive !== role) return; // bukan giliran
+          const item = approvals.find(x => x.role === role);
+          item.status = status;
+          if (status === "ACC") { item.date = new Date().toISOString().slice(0, 10); item.reason = item.reason || "OK"; if (item.reasonImage && !item.reasonImage.url) { item.reasonImage = null; } }
+          if (status === "Pending") { item.date = null; item.reason = ""; item.reasonImage = null; }
+          if (status === "Ditolak") { item.date = new Date().toISOString().slice(0, 10); item.reason = item.reason || ""; }
+          p.updatedAt = new Date().toISOString().slice(0, 10);
+          renderProject(c.id, p.id);
+        });
+      });
+      // Edit/Hapus/Kirim
+      $$('#app .btn-edit').forEach(b => {
+        b.addEventListener('click', () => {
+          const role = b.dataset.role; const idx = parseInt(b.dataset.step, 10);
+          const sel = document.querySelector(`.reason-type[data-step="${idx}"][data-role="${role}"]`);
+          if (sel && sel.value === 'text') {
+            const ta = document.querySelector(`.reason-text[data-step="${idx}"][data-role="${role}"]`); ta && ta.focus();
+          } else {
+            const fi = document.querySelector(`.reason-file[data-step="${idx}"][data-role="${role}"]`); fi && fi.click();
+          }
+        });
+      });
+      $$('#app .btn-hapus').forEach(b => {
+        b.addEventListener('click', () => {
+          const role = b.dataset.role; const idx = parseInt(b.dataset.step, 10);
+          const step = p.timeline[idx]; const it = step.approvals.find(x => x.role === role);
+          it.reason = ''; it.reasonImage = null; it.date = null; it.status = 'Pending';
+          renderProject(c.id, p.id);
+        });
+      });
+      $$('#app .btn-kirim').forEach(b => {
+        b.addEventListener('click', () => {
+          const role = b.dataset.role; const idx = parseInt(b.dataset.step, 10);
+          const step = p.timeline[idx]; const it = step.approvals.find(x => x.role === role);
+          it.date = new Date().toISOString().slice(0, 10);
+          renderProject(c.id, p.id);
+          toast('Laporan dikirim');
+        });
+      });
+    }
+
+    function renderProject(companyId, projectId) {
+      const c = (DATA?.companies || []).find(x => x.id === companyId);
+      const p = c?.projects?.find(x => x.id === projectId);
+      if (!c || !p) { $('#app').innerHTML = `<p>Project tidak ditemukan.</p>`; return; }
+      ensureMinReports(p);
+
+      // Filter state per project (default: butuh aksi saya)
+      const filter = PROJECT_FILTER[projectId] || 'mine'; // 'mine' | 'all'
+      const steps = (p.timeline || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+      const filteredSteps = (filter === 'mine') ? steps.filter(s => nextActionRole(s.approvals || []) === CURRENT_ROLE) : steps;
+
+      const projStatus = computeProjectConsistencyStatus(p);
+      const late = isLate(p); const ld = lateDays(p);
+
+      $('#app').innerHTML = `
+    <article class="space-y-6">
+      <section class="card soft-shadow p-5 bg-gradient-to-br from-white to-slate-50">
+        <nav class="text-sm text-slate-500 mb-1"><a class="hover:underline" href="#/">Home</a> / <a class="hover:underline" href="#/company/${c.id}">${c.name}</a> / <span class="text-slate-700">${p.name}</span></nav>
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+          <div>
+            <h1 class="text-xl sm:text-2xl font-semibold">${p.name}</h1>
+            <p class="text-slate-600">Admin: <span class="font-medium">${p.admin || '-'}</span></p>
+            <p class="text-xs text-slate-500 mt-1">Mulai ${formatDate(p.createdAt)} • Update ${formatDate(p.updatedAt)}</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="text-sm">Status proyek:</div>
+            <button class="${projStatus === 'Tidak konsisten' ? '' : 'pointer-events-none'}" data-click="${projStatus === 'Tidak konsisten' ? 'inconsistency' : ''}" data-project="${p.id}" data-company="${c.id}">
+              ${projectBadge(projStatus)}
+            </button>
+          </div>
+        </div>
+        <div class="mt-3 grid sm:grid-cols-3 gap-3">
+          <div class="rounded-xl border border-slate-200 p-3 bg-white">
+            <div class="text-xs text-slate-600">Deadline</div>
+            <div class="text-sm font-medium">${formatDate(p.deadline)}</div>
+            ${late ? `<div class="mt-1 text-xs text-rose-700">Telat ${ld} hari</div>` : `<div class="mt-1 text-xs text-emerald-700">On track</div>`}
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3 bg-white sm:col-span-2">
+            <div class="segmented inline-flex gap-2" role="tablist" aria-label="Filter laporan">
+              <button id="fltMine" class="${filter === 'mine' ? 'on' : ''}" role="tab" aria-selected="${filter === 'mine'}">Butuh Aksi Saya</button>
+              <button id="fltAll" class="${filter === 'all' ? 'on' : ''}" role="tab" aria-selected="${filter === 'all'}">Semua Laporan</button>
+            </div>
+            <div class="text-xs text-slate-500 mt-2">Anda login sebagai <span class="font-medium">${CURRENT_ROLE}</span>. Toggle untuk menampilkan laporan yang menunggu Anda.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card soft-shadow p-5 bg-white">
+        <h2 class="font-semibold mb-3">Timeline & Approval per Laporan</h2>
+        ${filteredSteps.length ? filteredSteps.map((step, i) => renderReportApproval(c, p, step, steps.indexOf(step))).join('') : `<p class='text-sm text-slate-500'>Tidak ada laporan yang menunggu Anda.</p>`}
+      </section>
+
+      <section class="card soft-shadow p-5 bg-white">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-semibold">Dokumen Proyek</h2>
+          <div class="text-xs text-slate-500">${p.attachments?.length || 0} berkas</div>
+        </div>
+        ${p.attachments?.length ? `<ul class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">${p.attachments.map(f => `
+          <li class="rounded-xl border border-slate-200 p-3 flex items-center gap-3 bg-white">
+            <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-slate-200">${(f.type || 'doc').toUpperCase()}</span>
+            <div class="min-w-0"><div class="text-sm font-medium truncate">${f.name}</div><div class="text-xs text-slate-500">${(f.type || 'DOC').toUpperCase()}${f.size ? ` • ${f.size}` : ''}</div></div>
+            <a href="${f.url}" class="ml-auto inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs hover:bg-slate-50">Lihat</a>
+          </li>`).join('')}</ul>` : `<p class="text-sm text-slate-500">Belum ada dokumen.</p>`}
+      </section>
+    </article>`;
+
+      // Handlers
+      const inconsBtn = $('#app [data-click="inconsistency"]');
+      if (inconsBtn) {
+        inconsBtn.addEventListener('click', () => {
+          const pid = inconsBtn.dataset.project; const cid = inconsBtn.dataset.company;
+          const comp = DATA.companies.find(x => x.id === cid); const proj = comp?.projects.find(x => x.id === pid);
+          if (!proj) return;
+          const rows = (proj.timeline || []).map((step, i) => {
+            const rejects = (step.approvals || []).filter(a => a.status === "Ditolak");
+            if (!rejects.length) return '';
+            const evHtml = (step.evidences || []).slice(0, 3).map(e => e.type === 'image'
+              ? `<img src="${e.url}" alt="${e.name}" class="w-14 h-14 object-cover rounded-md border border-slate-200"/>`
+              : `<span class="inline-flex items-center justify-center w-14 h-14 rounded-md border border-slate-200 text-[10px] bg-white">${(e.type || 'DOC').toUpperCase()}</span>`
+            ).join('');
+            const reasons = rejects.map(a => `
+          <li class="rounded-lg border border-slate-200 p-3">
+            <div class="flex items-center justify-between">
+              <div class="text-sm font-medium">${a.role}</div>
+              ${statusBadge(a.status)}
+            </div>
+            <div class="text-xs text-slate-500 mt-1">${a.date ? formatDate(a.date) : '-'}</div>
+            ${a.reason ? `<p class="text-sm mt-2">${a.reason}</p>` : ''}
+            ${a.reasonImage ? `<figure class="mt-2"><img src="${a.reasonImage.url}" alt="${a.reasonImage.alt || 'Bukti'}" class="w-full h-36 object-cover rounded-md border"/></figure>` : ''}
+          </li>`).join('');
+
+            return `
+          <section class="p-4 rounded-xl border border-slate-200 bg-white">
+            <div class="flex items-center justify-between">
+              <div class="font-semibold">Laporan #${i + 1} • ${step.action || 'Submission'}</div>
+              <div class="text-xs text-slate-500">${formatDate(step.date)}</div>
+            </div>
+            <p class="text-sm text-slate-700 mt-1">${step.note || ''}</p>
+            <div class="mt-3 flex gap-2">${evHtml}</div>
+            <ul class="mt-3 grid sm:grid-cols-2 gap-2">${reasons}</ul>
+          </section>`;
+          }).filter(Boolean).join('');
+          openModal('Alasan Penolakan • ' + proj.name, rows || `<p class="text-sm text-slate-600">Tidak ada penolakan pada laporan-laporan proyek ini.</p>`);
+        });
+      }
+
+      $('#fltMine').addEventListener('click', () => { PROJECT_FILTER[projectId] = 'mine'; renderProject(companyId, projectId); });
+      $('#fltAll').addEventListener('click', () => { PROJECT_FILTER[projectId] = 'all'; renderProject(companyId, projectId); });
+
+      attachReportHandlers(c, p);
+    }
+
+    /* ===================== ROUTER ===================== */
+    const routes = {
+      "#/": () => renderHome(),
+      "#/approvals": () => renderApprovals(),
+      "#/companies": () => renderCompanies(),
+      "#/company": (parts) => renderCompany(parts[2]),
+      "#/company-project": (parts) => renderProject(parts[2], parts[4]),
+      "#/arsip": () => { $('#app').innerHTML = `<section class='card p-6'><h1 class='text-xl font-semibold'>Arsip</h1><p class='text-slate-600 text-sm mt-1'>Belum ada arsip.</p></section>`; }
+    };
+    function router() {
+      const hash = location.hash || '#/';
+      const parts = hash.split('/');
+      highlightNav(hash);
+      if (hash.startsWith('#/company/') && parts.length === 3) return routes["#/company"](parts);
+      if (hash.startsWith('#/company/') && hash.includes('/project/')) return routes["#/company-project"](parts);
+      if (routes[hash]) return routes[hash]();
+      return routes["#/"]();
+    }
+
+    /* ===================== BOOT + EXTRA DUMMY GEN ===================== */
+    function generateExtraDummies() {
+      const sectors = ["Teknologi", "Agroindustri", "Logistik", "Konstruksi", "Perdagangan", "Energi"];
+      const cities = ["Bandung", "Medan", "Makassar", "Semarang", "Depok", "Batam", "Denpasar"];
+      const names = ["Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Kappa", "Lambda", "Sigma"];
+      const companies = [];
+      for (let i = 0; i < 6; i++) {
+        const nm = names[i];
+        const comp = {
+          id: `comp-x${i}`,
+          name: `PT ${nm} Nusantara`,
+          sector: sectors[i % sectors.length],
+          location: cities[i % cities.length],
+          quality: { employees: 65 + (i * 3) % 20, company: 70 + (i * 4) % 20 },
+          projects: []
+        };
+        for (let j = 0; j < 2 + (i % 2); j++) {
+          const pid = `x${i}-proj-${j}`;
+          const proj = {
+            id: pid,
+            name: j % 2 === 0 ? `Optimasi Energi Fase ${j + 1}` : `Audit Supplier ${j + 1}`,
+            admin: "System",
+            createdAt: "2025-02-01",
+            updatedAt: "2025-03-0" + (j + 1),
+            deadline: "2025-04-15",
+            attachments: [{ name: "proposal.pdf", url: "#", type: "pdf", size: "800 KB" }],
+            timeline: []
+          };
+          // make 3 reports with varied decisions
+          for (let r = 0; r < 3; r++) {
+            const step = {
+              date: `2025-03-0${r + 2}`,
+              actor: "System",
+              action: r === 0 ? "Pengajuan awal" : r === 1 ? "Perbaikan & resubmit" : "Finalisasi",
+              note: `Ringkasan dummy laporan ke-${r + 1}.`,
+              evidences: [
+                { type: "pdf", name: `lampiran-${r + 1}.pdf`, url: "#", size: "245 KB" },
+                { type: "image", name: `bukti-${r + 1}.png`, url: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='420' height='220'><rect width='100%' height='100%' fill='%23eef2ff'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%231d4ed8' font-size='16'>Bukti ${r+1}</text></svg>" }
+              ],
+              approvals: defaultApprovalSet()
+            };
+            // sprinkle decisions
+            const a = step.approvals;
+            if (r === 0) { a[0].status = "ACC"; a[0].date = "2025-03-04"; }
+            if (r === 1) { a[1].status = (i % 2) ? "Ditolak" : "ACC"; a[1].date = "2025-03-08"; a[1].reason = (i % 2) ? "Data kurang detail" : "OK"; }
+            if (r === 2) { a[2].status = "Pending"; }
+            proj.timeline.push(step);
+          }
+          comp.projects.push(proj);
+        }
+        companies.push(comp);
+      }
+      DATA.companies.push(...companies);
+    }
+
+    loadState();
+    generateExtraDummies();
+
+    document.getElementById('brandBtn')?.addEventListener('click', () => { location.hash = '#/'; });
+    window.addEventListener('hashchange', router);
+    window.addEventListener('load', router);
+
+    /* ===================== SELF TESTS ===================== */
+    (function runTests() {
+      const tests = [];
+      function assert(name, cond) { tests.push({ name, pass: !!cond }); }
+
+      // Test 1: ensureMinReports pads to >=3 and has evidence (doc+image) & note
+      const p1 = { createdAt: '2025-01-01', timeline: [{ date: '2025-01-02', approvals: defaultApprovalSet() }] };
+      ensureMinReports(p1);
+      const e1 = p1.timeline[0];
+      assert('ensureMinReports → min 3 reports', (p1.timeline.length >= 3));
+      assert('each report has note', p1.timeline.every(s => typeof s.note === 'string' && s.note.length > 0));
+      assert('each report has evidence >=1', p1.timeline.every(s => Array.isArray(s.evidences) && s.evidences.length >= 1));
+
+      // Test 2: project consistency logic (reject dominates => "Tidak konsisten")
+      const p2 = {
+        timeline: [
+          { approvals: [{ status: 'Ditolak' }, { status: 'ACC' }] },
+          { approvals: [{ status: 'Ditolak' }, { status: 'ACC' }] }
+        ]
+      };
+      assert('computeProjectConsistencyStatus → Tidak konsisten when reject >= 50%', computeProjectConsistencyStatus(p2) === "Tidak konsisten");
+
+      // Test 3: Menunggu when no decisions
+      const p3 = { timeline: [{ approvals: [{ status: 'Pending' }, { status: 'Pending' }] }] };
+      assert('computeProjectConsistencyStatus → Menunggu when none decided', computeProjectConsistencyStatus(p3) === "Menunggu");
+
+      // Test 4: Approvals page items tied to CURRENT_ROLE
+      const stepRole = { approvals: [{ role: 'Pemerintah', status: 'ACC' }, { role: 'Dewan Komisaris', status: 'ACC' }, { role: 'Investor', status: 'ACC' }, { role: 'Auditor', status: 'Pending' }] };
+      assert('nextActionRole → Auditor', nextActionRole(stepRole.approvals) === 'Auditor');
+
+      const failed = tests.filter(t => !t.pass);
+      if (failed.length) { console.error('Tests failed:', failed); toast('Unit test gagal – cek console'); }
+      else { console.log('All tests passed'); }
+    })();
+    // Seluruh script kamu sebelumnya tetap sama di sini
+    // Tidak perlu ubah logika lainnya (router, approvals, render, dst)
+    // Cukup pastikan event openModal / closeModal menambahkan class 'show' ke .modal-overlay
+    function openModal(title, html) {
+      const m = document.getElementById('modalHost');
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = html;
+      m.classList.add('show');
+      m.setAttribute('aria-hidden', 'false');
+    }
+    function closeModal() {
+      const m = document.getElementById('modalHost');
+      m.classList.remove('show');
+      m.setAttribute('aria-hidden', 'true');
+    }
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.getElementById('modalHost').addEventListener('click', e => { if (e.target.id === 'modalHost') closeModal(); });
+
+    // ...
+    // [masukkan kembali semua script utama kamu di bawah ini, tak perlu diubah kecuali bagian modal]
+
+  </script>
+  <script>
+    // Seluruh script kamu sebelumnya tetap sama di sini
+    // Tidak perlu ubah logika lainnya (router, approvals, render, dst)
+    // Cukup pastikan event openModal / closeModal menambahkan class 'show' ke .modal-overlay
+    function openModal(title, html){
+      const m = document.getElementById('modalHost');
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = html;
+      m.classList.add('show');
+      m.setAttribute('aria-hidden','false');
+    }
+    function closeModal(){
+      const m = document.getElementById('modalHost');
+      m.classList.remove('show');
+      m.setAttribute('aria-hidden','true');
+    }
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.getElementById('modalHost').addEventListener('click', e=>{ if(e.target.id==='modalHost') closeModal(); });
+
+    // ...
+    // [masukkan kembali semua script utama kamu di bawah ini, tak perlu diubah kecuali bagian modal]
+  </script>
+</body>
+</html>
