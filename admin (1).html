@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ESG Quest — Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<meta name="color-scheme" content="light">
+<style>
+  :root{
+    --bg:#f5f7fb; --ink:#0f172a; --card:#fff; --border:#e6e8ef;
+    --brand:#1d4ed8; --brand-600:#1d4ed8; --brand-700:#1e40af;
+  }
+  html,body{background:var(--bg);color:var(--ink)}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px}
+  .soft{box-shadow:0 1px 3px rgba(2,6,23,.06),0 20px 40px -24px rgba(2,6,23,.12)}
+  .badge{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .55rem;font-size:.7rem;border-radius:999px;border:1px solid}
+  .chip{display:inline-flex;align-items:center;gap:.35rem;padding:.3rem .6rem;border-radius:999px;border:1px solid var(--border);font-size:.78rem}
+  :focus-visible{outline:3px solid var(--brand-600);outline-offset:2px;border-radius:.8rem}
+  /* Shell */
+  .shell{min-height:100vh}
+  .sidebar{width:260px}
+  .topbar{height:64px}
+  .mini-scroll{scrollbar-width:thin}
+  /* table */
+  .tbl th,.tbl td{padding:.6rem .75rem}
+  .tbl thead th{font-weight:600;color:#475569;background:#f8fafc}
+</style>
+</head>
+<body class="antialiased">
+<!-- ================== DATA & STORAGE ================== -->
+<script>
+(() => {
+  const DEFAULT_DATA = {
+    companies: [
+      {
+        id:"comp-a", name:"PT Alpha Energi", sector:"Energi Terbarukan", location:"Jakarta",
+        quality:{employees:82, company:88},
+        projects:[
+          {
+            id:"a-proj-1", name:"Laporan Keberlanjutan 2025", admin:"Gery",
+            esg:{sosial:true, lingkungan:true, tataKelola:true},
+            createdAt:"2025-01-10", updatedAt:"2025-03-02", deadline:"2025-03-01",
+            team:[{name:"Gery Pratama",role:"Owner"},{name:"Rina Maharani",role:"Analis ESG"},{name:"Budi Santoso",role:"Data Engineer"}],
+            attachments:[{name:"draft-v1.pdf",url:"#",type:"pdf",size:"1.2 MB"},{name:"lampiran-emisi.xlsx",url:"#",type:"xlsx",size:"540 KB"}],
+            gallery:[{alt:"Panel Surya",url:"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='320'><rect width='100%' height='100%' fill='%23eef2ff'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23636bfb' font-size='18'>Panel Surya</text></svg>"}],
+            reports:[
+              {id:"r1",date:"2025-01-20",title:"Submit Draft",status:"Pending",notes:"Draf awal siap",files:[{name:"draft-v1.pdf",url:"#"}]},
+              {id:"r2",date:"2025-02-10",title:"Perbaikan Bab Emisi",status:"ACC",notes:"Catatan sudah direspon",files:[]}
+            ]
+          },
+          {
+            id:"a-proj-2", name:"Audit Emisi Scope 1–3", admin:"Gery",
+            esg:{sosial:true, lingkungan:true, tataKelola:false},
+            createdAt:"2025-04-02", updatedAt:"2025-04-18", deadline:"2025-05-15",
+            team:[{name:"Rama Wijaya",role:"Auditor Internal"}],
+            attachments:[{name:"rencana-audit.docx",url:"#",type:"docx",size:"320 KB"}],
+            gallery:[],
+            reports:[
+              {id:"r3",date:"2025-04-05",title:"Rencana Audit",status:"Ditolak",notes:"Butuh bukti tambahan",files:[{name:"bukti-temuan.png",url:"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='320'><rect width='100%' height='100%' fill='%23fee2e2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' fill='%23b91c1c' font-size='18'>Bukti Temuan</text></svg>"}]}
+            ]
+          }
+        ]
+      },
+      {
+        id:"comp-b", name:"PT Beta Industri", sector:"Manufaktur", location:"Surabaya",
+        quality:{employees:74, company:71},
+        projects:[
+          {
+            id:"b-proj-1", name:"Upgrade IPAL Limbah Cair", admin:"Dina",
+            esg:{sosial:true, lingkungan:true, tataKelola:true},
+            createdAt:"2025-02-10", updatedAt:"2025-06-05", deadline:"2025-06-01",
+            team:[{name:"Dina Kartika",role:"Owner"},{name:"Yoga Firmansyah",role:"Process Engineer"}],
+            attachments:[{name:"desain-instalasi.pdf",url:"#",type:"pdf",size:"1.1 MB"}],
+            gallery:[],
+            reports:[
+              {id:"r4",date:"2025-05-28",title:"Submit Desain",status:"ACC",notes:"Siap implementasi",files:[{name:"desain-instalasi.pdf",url:"#"}]}
+            ]
+          }
+        ]
+      },
+      { id:"comp-c", name:"PT Citra Agro", sector:"Agroindustri", location:"Medan", quality:{employees:79,company:76}, projects:[] }
+    ]
+  };
+
+  const readLS = (k, def) => { try{ const v=localStorage.getItem(k); return v? JSON.parse(v): def; }catch{return def;} };
+  window.APP = {
+    DATA: readLS("ESG_DATA", DEFAULT_DATA),
+    LEDGER: readLS("ESG_LEDGER", []),
+    save(){ localStorage.setItem("ESG_DATA", JSON.stringify(this.DATA)); },
+    log(type, detail){ this.LEDGER.push({type, detail, ts:Date.now()}); localStorage.setItem("ESG_LEDGER", JSON.stringify(this.LEDGER)); }
+  };
+})();
+</script>
+
+<!-- ================== ADMIN SHELL ================== -->
+<div class="shell grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)]">
+  <!-- Sidebar -->
+  <aside class="sidebar hidden lg:flex lg:flex-col border-r border-slate-200 bg-white">
+    <div class="topbar flex items-center gap-2 px-4 border-b">
+      <span class="inline-flex items-center justify-center size-9 rounded-xl bg-blue-100 text-blue-700 ring-1 ring-blue-200">
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Z"/></svg>
+      </span>
+      <div class="font-semibold">ESG Admin</div>
+    </div>
+    <nav id="sideNav" class="p-3 space-y-1 mini-scroll" aria-label="Sidebar">
+      <a href="#/admin"          class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-50"><span>Dashboard</span></a>
+      <div class="mt-2 px-3 text-xs font-semibold text-slate-500">Data Entry</div>
+      <a href="#/admin/companies" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-50"><span>Companies</span></a>
+      <a href="#/admin/projects"  class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-50"><span>Projects</span></a>
+      <div class="mt-2 px-3 text-xs font-semibold text-slate-500">Utilities</div>
+      <a href="#/admin/import"    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-50"><span>Import/Export</span></a>
+      <a href="#/admin/settings"  class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-50"><span>Settings</span></a>
+    </nav>
+    <div class="mt-auto p-3 text-xs text-slate-500 border-t">© ESG Quest</div>
+  </aside>
+
+  <!-- Main -->
+  <section class="min-h-screen bg-slate-50">
+    <!-- Topbar -->
+    <header class="topbar bg-white border-b border-slate-200 flex items-center justify-between px-4">
+      <div class="flex items-center gap-2">
+        <button id="openSide" class="lg:hidden inline-flex items-center justify-center size-10 rounded-lg border border-slate-200 bg-white" aria-label="Menu">
+          <svg class="size-5" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="hidden md:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1">
+          <svg class="size-4 text-slate-400" viewBox="0 0 24 24" fill="currentColor"><path d="m21 21-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"/></svg>
+          <input id="topSearch" class="w-72 outline-none text-sm" placeholder="Cari company/project…"/>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="inline-flex items-center justify-center size-10 rounded-lg border border-slate-200 bg-white" aria-label="Notif"><svg class="size-5 text-slate-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1Z"/></svg></button>
+        <div class="flex items-center gap-2">
+          <img alt="avatar" class="size-9 rounded-full ring-2 ring-slate-200" src="https://i.pravatar.cc/80?img=12"/>
+          <div class="leading-tight">
+            <div class="text-sm font-semibold">Admin</div>
+            <div class="text-[11px] text-slate-500">admin@esg.quest</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main id="view" class="p-4 lg:p-6"></main>
+  </section>
+</div>
+
+<!-- ================== HELPERS & ROUTER ================== -->
+<script>
+const $=(s,ctx=document)=>ctx.querySelector(s);
+const $$=(s,ctx=document)=>Array.from(ctx.querySelectorAll(s));
+const fmt=(iso)=> iso? new Date(iso+"T00:00:00").toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}):"-";
+const uid=()=>crypto.randomUUID();
+
+function badgeStatus(s){
+  const m={Pending:"bg-slate-50 text-slate-700 border-slate-200",
+           "ACC":"bg-emerald-50 text-emerald-700 border-emerald-200",
+           "Ditolak":"bg-rose-50 text-rose-700 border-rose-200",
+           "In Review":"bg-blue-50 text-blue-700 border-blue-200",
+           "Late":"bg-amber-50 text-amber-700 border-amber-200"};
+  return `<span class="badge ${m[s]||m.Pending}">${s}</span>`;
+}
+const initials=(n="")=>n.split(" ").filter(Boolean).map(x=>x[0]).slice(0,2).join("").toUpperCase();
+const avatar=(name)=>`<span class="inline-flex items-center justify-center size-8 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">${initials(name)}</span>`;
+const csvToArray=(text)=> text.trim().split(/\r?\n/).map(l=>l.split(",").map(s=>s.trim()));
+
+function projStatusByReports(p){
+  const rs=p.reports||[];
+  const hasReject=rs.some(r=>r.status==="Ditolak");
+  const allAcc=rs.length>0 && rs.every(r=>r.status==="ACC");
+  if(hasReject) return "Ditolak";
+  if(allAcc) return "ACC";
+  return "Pending";
+}
+function isLate(p){
+  if(!p.deadline) return false;
+  const due=new Date(p.deadline+"T23:59:59");
+  // kalau status belum ACC sampai lewat due => telat
+  if(projStatusByReports(p)!=="ACC" && new Date()>due) return true;
+  // kalau ACC tapi semua report selesai setelah due (tidak kita track tuntas report, jadi simple)
+  if(projStatusByReports(p)==="ACC"){
+    const last = p.reports?.slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).pop();
+    if(last && new Date(last.date)>due) return true;
+  }
+  return false;
+}
+function statsAll(){
+  const cs=APP.DATA.companies;
+  const projects=cs.flatMap(c=>c.projects||[]);
+  const reports=projects.flatMap(p=>p.reports||[]);
+  const late=projects.filter(isLate).length;
+  return {companies:cs.length, projects:projects.length, reports:reports.length, late};
+}
+
+// Charts (Canvas, no libs)
+function drawLine(canvas){
+  if(!canvas) return;
+  const ctx=canvas.getContext("2d");
+  const w=canvas.parentElement.clientWidth; canvas.width=w; canvas.height=240;
+  const months=["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+  const dataA=[6,7,5,9,8,12,9,10,8,11,13,12]; // Projects created
+  const dataB=[3,5,4,6,7,9,8,9,7,10,11,10];   // Reports submitted
+  const pad={l:36,r:12,t:12,b:26}, ch=canvas.height-pad.t-pad.b, cw=canvas.width-pad.l-pad.r;
+  const max=Math.max(...dataA,...dataB)+2;
+  ctx.clearRect(0,0,w,canvas.height);
+  ctx.strokeStyle="#e5e7eb"; ctx.fillStyle="#475569"; ctx.font="12px system-ui";
+  for(let i=0;i<=4;i++){ const y=pad.t+ch*(i/4); ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(w-pad.r,y); ctx.stroke(); ctx.fillText(String(Math.round(max*(1-i/4))),4,y+4); }
+  const step=cw/(months.length-1);
+  function path(data,color){ ctx.beginPath(); ctx.lineWidth=2; ctx.strokeStyle=color; data.forEach((v,i)=>{ const x=pad.l+i*step; const y=pad.t+ch*(1-v/max); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);}); ctx.stroke(); }
+  path(dataA,"#f97316"); path(dataB,"#ef4444");
+  ctx.fillStyle="#475569"; months.forEach((m,i)=>{ const x=pad.l+i*step; ctx.fillText(m,x-8,canvas.height-8);});
+}
+function drawDonut(canvas){
+  if(!canvas) return;
+  const ctx=canvas.getContext("2d");
+  const w=canvas.parentElement.clientWidth; canvas.width=w; canvas.height=240;
+  const projs=APP.DATA.companies.flatMap(c=>c.projects||[]);
+  const a=projs.filter(p=>projStatusByReports(p)==="ACC").length;
+  const rj=projs.filter(p=>projStatusByReports(p)==="Ditolak").length;
+  const pd=projs.length - a - rj;
+  const data=[{v:pd,c:"#60a5fa",l:"Pending"},{v:a,c:"#22c55e",l:"ACC"},{v:rj,c:"#ef4444",l:"Ditolak"}];
+  const total=data.reduce((s,d)=>s+d.v,0)||1;
+  const cx=canvas.width/2, cy=120, r=80, ir=50; let start=-Math.PI/2;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  data.forEach(d=>{ const ang=(d.v/total)*Math.PI*2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,start,start+ang); ctx.closePath(); ctx.fillStyle=d.c; ctx.fill(); start+=ang; });
+  ctx.globalCompositeOperation="destination-out"; ctx.beginPath(); ctx.arc(cx,cy,ir,0,Math.PI*2); ctx.fill(); ctx.globalCompositeOperation="source-over";
+  ctx.fillStyle="#0f172a"; ctx.font="14px system-ui"; ctx.textAlign="center"; ctx.fillText("Overall",cx,cy-6); ctx.font="20px system-ui"; ctx.fillText(total+" proj",cx,cy+18);
+  // legend
+  let y=14; data.forEach(d=>{ ctx.fillStyle=d.c; ctx.fillRect(10,y,10,10); ctx.fillStyle="#0f172a"; ctx.font="12px system-ui"; ctx.fillText(`${d.l} (${d.v})`,28,y+10); y+=16; });
+}
+function drawProjectReportChart(canvas, project){
+  if(!canvas) return;
+  const ctx=canvas.getContext("2d");
+  const w=canvas.parentElement.clientWidth; canvas.width=w; canvas.height=220;
+  const acc=(project.reports||[]).filter(r=>r.status==="ACC").length;
+  const rej=(project.reports||[]).filter(r=>r.status==="Ditolak").length;
+  const pen=(project.reports||[]).filter(r=>r.status!=="ACC"&&r.status!=="Ditolak").length;
+  const labels=["ACC","Ditolak","Pending"]; const vals=[acc,rej,pen]; const colors=["#10b981","#ef4444","#60a5fa"];
+  const max=Math.max(5,Math.max(...vals)); const pad={l:40,r:10,t:10,b:36}, ch=canvas.height-pad.t-pad.b, cw=canvas.width-pad.l-pad.r;
+  ctx.clearRect(0,0,canvas.width,canvas.height); ctx.strokeStyle="#e5e7eb"; ctx.fillStyle="#475569"; ctx.font="12px system-ui";
+  for(let i=0;i<=4;i++){ const v=Math.round(max*i/4); const y=pad.t+ch*(1-v/max); ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(canvas.width-pad.r,y); ctx.stroke(); ctx.fillText(v,8,y+4); }
+  const gap=24; const bw=(cw-gap*(vals.length-1))/vals.length;
+  vals.forEach((v,i)=>{ const x=pad.l+i*(bw+gap); const h=ch*(v/max); const y=pad.t+(ch-h); ctx.fillStyle=colors[i]; ctx.fillRect(x,y,bw,h); const lab=`${labels[i]} (${v})`; ctx.fillStyle="#0f172a"; ctx.fillText(lab, x+bw/2-ctx.measureText(lab).width/2, canvas.height-10); });
+}
+
+// Router
+function router(){
+  const h=location.hash||"#/admin";
+  // highlight
+  $$("#sideNav a").forEach(a=>{ if(h.startsWith(a.getAttribute("href"))) a.classList.add("bg-blue-50","text-blue-700"); else a.classList.remove("bg-blue-50","text-blue-700"); });
+  if(h==="#/admin") return viewDashboard();
+  if(h==="#/admin/companies") return viewCompanies();
+  if(h==="#/admin/projects") return viewProjects();
+  const m = h.match(/^#\/admin\/projects\/([^/]+)\/([^/]+)$/);
+  if(m) return viewProjectDetail(m[1], m[2]);
+  if(h==="#/admin/import") return viewImportExport();
+  if(h==="#/admin/settings") return viewSettings();
+  return viewDashboard();
+}
+window.addEventListener("hashchange",router);
+window.addEventListener("load",router);
+$("#openSide").onclick=()=> document.querySelector(".sidebar")?.classList.toggle("hidden");
+$("#topSearch").addEventListener("input", (e)=>{
+  const q=e.target.value.toLowerCase().trim();
+  if(location.hash.startsWith("#/admin/projects/")) return; // biar gak ganggu detail
+  if(location.hash!=="#/admin/projects") location.hash="#/admin/projects";
+  setTimeout(()=>{ $$("#projRows tr").forEach(tr=>{ const t=tr.textContent.toLowerCase(); tr.style.display = t.includes(q) ? "" : "none"; });},0);
+});
+</script>
+
+<!-- ================== VIEWS ================== -->
+<script>
+// ---------- Dashboard ----------
+function metric(title,value,cls){ return `
+  <section class="card soft p-4">
+    <div class="rounded-xl ${cls} text-white px-4 py-3 flex items-center justify-between">
+      <div><div class="text-sm opacity-90">${title}</div><div class="text-2xl font-semibold">${value}</div></div>
+      <div class="text-xs opacity-90">update: ${new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"})}</div>
+    </div>
+  </section>`; }
+function viewDashboard(){
+  const s=statsAll();
+  $("#view").innerHTML = `
+    <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      ${metric("All Earnings","$302,000","bg-gradient-to-r from-orange-400 to-orange-500")}
+      ${metric("Companies",s.companies,"bg-gradient-to-r from-emerald-400 to-emerald-500")}
+      ${metric("Projects",s.projects,"bg-gradient-to-r from-rose-400 to-rose-500")}
+      ${metric("Reports",s.reports,"bg-gradient-to-r from-cyan-400 to-cyan-500")}
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-4 mt-4">
+      <section class="lg:col-span-2 card soft p-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">Data Analytics</h3>
+          <div class="text-xs text-slate-500">update: <span>${new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"})}</span></div>
+        </div>
+        <canvas id="lineChart" class="mt-2" aria-label="chart projects vs reports"></canvas>
+      </section>
+
+      <section class="card soft p-4">
+        <h3 class="font-semibold">Project Overall</h3>
+        <canvas id="donutChart" class="mt-3" aria-label="donut project risk"></canvas>
+        <button class="mt-3 w-full rounded-lg border border-slate-200 py-2 text-sm hover:bg-slate-50">Download Overall Report</button>
+      </section>
+    </div>
+
+    <div class="grid xl:grid-cols-3 gap-4 mt-4">
+      <section class="xl:col-span-2 card soft p-0 overflow-hidden">
+        <div class="p-4 flex items-center justify-between">
+          <h3 class="font-semibold">Project Overview</h3>
+          <a href="#/admin/projects" class="text-sm text-blue-700 hover:underline">Lihat semua</a>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full tbl text-sm">
+            <thead><tr><th class="text-left">Project</th><th class="text-left">Company</th><th>Status</th><th class="text-right">Deadline</th></tr></thead>
+            <tbody id="dashProjectRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="card soft p-4">
+        <h3 class="font-semibold">User Activity</h3>
+        <ul class="mt-3 space-y-3 text-sm" id="activityList"></ul>
+      </aside>
+    </div>
+  `;
+  setTimeout(()=>{ drawLine($("#lineChart")); drawDonut($("#donutChart")); },0);
+
+  const rows=[];
+  APP.DATA.companies.forEach(c=> (c.projects||[]).forEach(p=> rows.push({c,p})));
+  $("#dashProjectRows").innerHTML = rows.slice(0,8).map(({c,p})=>`
+    <tr class="border-t">
+      <td><a class="text-blue-700 hover:underline" href="#/admin/projects/${c.id}/${p.id}">${p.name}</a></td>
+      <td>${c.name}</td>
+      <td class="text-center">${badgeStatus(projStatusByReports(p))}</td>
+      <td class="text-right">${fmt(p.deadline)}</td>
+    </tr>`).join("") || `<tr><td colspan="4" class="text-center py-6 text-slate-500">Belum ada project.</td></tr>`;
+
+  const acts = APP.LEDGER.slice().reverse().slice(0,6);
+  $("#activityList").innerHTML = acts.length? acts.map(a=>`
+    <li class="flex items-start gap-3">
+      <span class="inline-flex size-8 rounded-full bg-slate-100 items-center justify-center text-slate-600">
+        <svg class="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M5 12h14"/></svg>
+      </span>
+      <div><div class="font-medium">${a.type}</div><div class="text-xs text-slate-500">${new Date(a.ts).toLocaleString("id-ID")}</div><div class="text-slate-600">${a.detail||""}</div></div>
+    </li>`).join("") : `<li class="text-sm text-slate-500">Belum ada aktivitas.</li>`;
+}
+
+// ---------- Companies ----------
+function viewCompanies(){
+  $("#view").innerHTML = `
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Companies</h2>
+      <div class="flex items-center gap-2"><button id="btnAddCompany" class="chip hover:bg-slate-50">+ Add Company</button></div>
+    </div>
+    <div class="card soft overflow-hidden mt-3">
+      <div class="overflow-x-auto">
+        <table class="w-full tbl text-sm">
+          <thead><tr><th class="text-left">Nama</th><th class="text-left">Sektor</th><th class="text-left">Lokasi</th><th>Projects</th><th class="text-right">Aksi</th></tr></thead>
+          <tbody id="companyRows"></tbody>
+        </table>
+      </div>
+    </div>
+    <dialog id="modalCompany" class="p-0 rounded-2xl w-full max-w-2xl"></dialog>
+  `;
+  const draw=()=>{
+    $("#companyRows").innerHTML = APP.DATA.companies.map((c,i)=>`
+      <tr class="border-t">
+        <td>${c.name}</td><td>${c.sector}</td><td>${c.location}</td><td class="text-center">${c.projects?.length||0}</td>
+        <td class="text-right">
+          <button class="chip mr-1" data-edit="${i}">Edit</button>
+          <button class="chip text-rose-700" data-del="${i}">Hapus</button>
+        </td>
+      </tr>`).join("") || `<tr><td colspan="5" class="text-center py-6 text-slate-500">Belum ada data.</td></tr>`;
+    $$("#companyRows [data-edit]").forEach(b=> b.onclick=()=> openCompanyModal(+b.dataset.edit));
+    $$("#companyRows [data-del]").forEach(b=> b.onclick=()=> { if(confirm("Hapus company ini?")){ APP.DATA.companies.splice(+b.dataset.del,1); APP.save(); APP.log("DELETE_COMPANY","hapus company"); draw(); }});
+  };
+  draw();
+  $("#btnAddCompany").onclick=()=> openCompanyModal(null);
+
+  function openCompanyModal(idx){
+    const isNew = idx===null;
+    const c = isNew? {id:uid(), name:"",sector:"",location:"",quality:{employees:70,company:70},projects:[]} : JSON.parse(JSON.stringify(APP.DATA.companies[idx]));
+    const dlg=$("#modalCompany");
+    dlg.innerHTML = `
+      <form method="dialog" class="card soft p-5">
+        <h3 class="font-semibold mb-3">${isNew?"Tambah":"Edit"} Company</h3>
+        ${formCompany("modal",c)}
+        <div class="mt-4 flex justify-end gap-2">
+          <button class="chip" value="cancel">Batal</button>
+          <button id="saveCompany" class="chip bg-blue-600 text-white border-blue-600">Simpan</button>
+        </div>
+      </form>`;
+    dlg.showModal();
+    bindCompanyForm("modal", (payload)=>{
+      if(!payload.name.trim()){ alert("Nama wajib."); return false; }
+      if(isNew) APP.DATA.companies.push(payload); else APP.DATA.companies[idx]=payload;
+      APP.save(); APP.log(isNew?"CREATE_COMPANY":"UPDATE_COMPANY", payload.name);
+      dlg.close(); draw();
+    }, c);
+  }
+}
+function formCompany(idPrefix, data={}){
+  return `
+  <div class="grid grid-cols-6 gap-3" id="companyForm-${idPrefix}">
+    <label class="col-span-3 text-sm">Nama
+      <input data-f="name" class="w-full rounded-lg border border-slate-300 px-3 py-2" value="${data.name||""}">
+    </label>
+    <label class="col-span-2 text-sm">Sektor
+      <input data-f="sector" class="w-full rounded-lg border border-slate-300 px-3 py-2" value="${data.sector||""}">
+    </label>
+    <label class="col-span-1 text-sm">Lokasi
+      <input data-f="location" class="w-full rounded-lg border border-slate-300 px-3 py-2" value="${data.location||""}">
+    </label>
+    <label class="col-span-3 text-sm">Skor Karyawan
+      <input data-f="qEmployees" type="number" min="0" max="100" class="w-full rounded-lg border border-slate-300 px-3 py-2" value="${data.quality?.employees??70}">
+    </label>
+    <label class="col-span-3 text-sm">Skor Perusahaan
+      <input data-f="qCompany" type="number" min="0" max="100" class="w-full rounded-lg border border-slate-300 px-3 py-2" value="${data.quality?.company??70}">
+    </label>
+  </div>`;
+}
+function bindCompanyForm(idPrefix, onSave, initial){
+  const root = $(`#companyForm-${idPrefix}`);
+  $("#saveCompany")?.addEventListener("click",(e)=>{ e.preventDefault();
+    const m = (sel)=> root.querySelector(`[data-f="${sel}"]`).value;
+    const payload = initial? {...initial}: {id:uid(), projects:[]};
+    payload.name=m("name"); payload.sector=m("sector"); payload.location=m("location");
+    payload.quality={employees:+m("qEmployees")||0, company:+m("qCompany")||0};
+    onSave(payload);
+  });
+}
+
+// ---------- Projects (list) ----------
+function viewProjects(){
+  $("#view").innerHTML = `
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Projects</h2>
+      <div class="flex items-center gap-2"><button id="btnAddProject" class="chip hover:bg-slate-50">+ Add Project</button></div>
+    </div>
+    <div class="card soft overflow-hidden mt-3">
+      <div class="overflow-x-auto">
+        <table class="w-full tbl text-sm">
+          <thead><tr>
+            <th class="text-left">Project</th><th class="text-left">Company</th><th>Admin</th><th>Status</th><th class="text-right">Deadline</th><th class="text-right">Aksi</th>
+          </tr></thead>
+          <tbody id="projRows"></tbody>
+        </table>
+      </div>
+    </div>
+    <dialog id="modalProject" class="p-0 rounded-2xl w-full max-w-3xl"></dialog>
+  `;
+  const rows=[];
+  APP.DATA.companies.forEach(c=> (c.projects||[]).forEach((p)=> rows.push({c,p})));
+  const draw=()=>{
+    $("#projRows").innerHTML = rows.map(({c,p})=>`
+      <tr class="border-t">
+        <td><a class="text-blue-700 hover:underline" href="#/admin/projects/${c.id}/${p.id}">${p.name}</a></td>
+        <td>${c.name}</td>
+        <td class="text-center">${p.admin||"-"}</td>
+        <td class="text-center">${badgeStatus(projStatusByReports(p))} ${isLate(p)?'<span class="badge bg-amber-50 text-amber-700 border-amber-200 ml-1">Late</span>':''}</td>
+        <td class="text-right">${fmt(p.deadline)}</td>
+        <td class="text-right whitespace-nowrap">
+          <button class="chip" data-edit="${p.id}" data-cid="${c.id}">Edit</button>
+          <button class="chip text-rose-700" data-del="${p.id}" data-cid="${c.id}">Hapus</button>
+        </td>
+      </tr>`).join("") || `<tr><td colspan="6" class="text-center py-6 text-slate-500">Belum ada project.</td></tr>`;
+    $$("#projRows [data-edit]").forEach(b=> b.onclick=()=> openProjectModal(b.dataset.cid, b.dataset.edit));
+    $$("#projRows [data-del]").forEach(b=> b.onclick=()=> { const comp=APP.DATA.companies.find(x=>x.id===b.dataset.cid); const idx=comp.projects.findIndex(x=>x.id===b.dataset.del); if(confirm("Hapus project ini?")){ comp.projects.splice(idx,1); APP.save(); APP.log("DELETE_PROJECT", ""); viewProjects(); }});
+  };
+  draw();
+  $("#btnAddProject").onclick=()=> openProjectModal(null,null);
+
+  function openProjectModal(cid, pid){
+    const isNew = !pid;
+    const comp = cid? APP.DATA.companies.find(x=>x.id===cid) : null;
+    const p = isNew? {
+      id:uid(), name:"", admin:"", esg:{sosial:false,lingkungan:false,tataKelola:false},
+      createdAt:new Date().toISOString().slice(0,10), updatedAt:new Date().toISOString().slice(0,10), deadline:"",
+      team:[], attachments:[], gallery:[], reports:[]
+    } : JSON.parse(JSON.stringify(comp.projects.find(x=>x.id===pid)));
+    const dlg=$("#modalProject");
+    dlg.innerHTML = `
+      <form method="dialog" class="card soft p-5">
+        <h3 class="font-semibold mb-3">${isNew?"Tambah":"Edit"} Project</h3>
+        ${formProject("modal", p, comp?.id)}
+        <div class="mt-4 flex justify-end gap-2">
+          <button class="chip" value="cancel">Batal</button>
+          <button id="saveProject" class="chip bg-blue-600 text-white border-blue-600">Simpan</button>
+        </div>
+      </form>`;
+    dlg.showModal();
+    bindProjectForm("modal",(payload)=>{
+      const c = APP.DATA.companies.find(x=>x.id===payload.companyId);
+      if(!c){ alert("Pilih Company."); return; }
+      if(isNew) c.projects.push(payload); else { const i=c.projects.findIndex(x=>x.id===payload.id); c.projects[i]=payload; }
+      APP.save(); APP.log(isNew?"CREATE_PROJECT":"UPDATE_PROJECT", payload.name);
+      dlg.close(); viewProjects();
+    }, p, comp?.id);
+  }
+}
+function formProject(idPrefix, data={}, presetCompanyId){
+  const opts = APP.DATA.companies.map(c=>`<option value="${c.id}" ${c.id===(presetCompanyId||data.companyId)?"selected":""}>${c.name}</option>`).join("");
+  return `
+  <div class="grid grid-cols-6 gap-3" id="projectForm-${idPrefix}">
+    <label class="col-span-3 text-sm">Company
+      <select data-f="companyId" class="w-full rounded-lg border border-slate-300 px-3 py-2">
+        <option value="">— pilih —</option>${opts}
+      </select>
+    </label>
+    <label class="col-span-3 text-sm">Nama Project
+      <input data-f="name" class="w-full rounded-lg border border-slate-300 px-3 py-2" value="${data.name||""}">
+    </label>
+    <label class="col-span-2 text-sm">Admin
+      <input data-f="admin" class="w-full rounded-lg border border-slate-300 px-3 py-2" value="${data.admin||""}">
+    </label>
+    <label class="col-span-2 text-sm">Created
+      <input data-f="createdAt" type="date" class="w-full rounded-lg border border-slate-300 px-3 py-2" value="${data.createdAt||""}">
+    </label>
+    <label class="col-span-2 text-sm">Deadline
+      <input data-f="deadline" type="date" class="w-full rounded-lg border border-slate-300 px-3 py-2" value="${data.deadline||""}">
+    </label>
+    <div class="col-span-6 flex items-center gap-4 text-sm">
+      <label class="inline-flex items-center gap-2"><input data-f="esgS" type="checkbox" ${data.esg?.sosial?"checked":""}> Sosial</label>
+      <label class="inline-flex items-center gap-2"><input data-f="esgL" type="checkbox" ${data.esg?.lingkungan?"checked":""}> Lingkungan</label>
+      <label class="inline-flex items-center gap-2"><input data-f="esgT" type="checkbox" ${data.esg?.tataKelola?"checked":""}> Tata Kelola</label>
+    </div>
+    <div class="col-span-6">
+      <div class="font-medium text-sm">Team</div>
+      <div id="teamWrap-${idPrefix}" class="mt-2 space-y-2"></div>
+      <button type="button" id="btnAddMember-${idPrefix}" class="chip mt-1">+ Anggota</button>
+    </div>
+  </div>`;
+}
+function bindProjectForm(idPrefix, onSave, initial={}, presetCompanyId){
+  const root=$(`#projectForm-${idPrefix}`); if(!root) return;
+  const teamWrap = $(`#teamWrap-${idPrefix}`); const team = JSON.parse(JSON.stringify(initial.team||[]));
+  function drawTeam(){
+    teamWrap.innerHTML = team.map((m,i)=>`
+      <div class="grid grid-cols-12 gap-2 items-center">
+        <input class="col-span-7 rounded-lg border px-2 py-1" placeholder="Nama" value="${m.name||""}" data-i="${i}" data-k="name">
+        <input class="col-span-4 rounded-lg border px-2 py-1" placeholder="Peran" value="${m.role||""}" data-i="${i}" data-k="role">
+        <button class="col-span-1 chip text-rose-700" data-del="${i}">x</button>
+      </div>`).join("") || `<div class="text-xs text-slate-500">Belum ada anggota.</div>`;
+    $$("#teamWrap-"+idPrefix+" [data-i]").forEach(inp=> inp.oninput=(e)=>{ team[+inp.dataset.i][inp.dataset.k]=e.target.value; });
+    $$("#teamWrap-"+idPrefix+" [data-del]").forEach(b=> b.onclick=()=>{ team.splice(+b.dataset.del,1); drawTeam(); });
+  }
+  drawTeam();
+  $(`#btnAddMember-${idPrefix}`).onclick=()=>{ team.push({name:"",role:""}); drawTeam(); };
+
+  $("#saveProject")?.addEventListener("click",(e)=>{ e.preventDefault();
+    const val=(k)=> root.querySelector(`[data-f="${k}"]`)?.value || "";
+    const chk=(k)=> root.querySelector(`[data-f="${k}"]`)?.checked || false;
+    const payload = initial?.id? {...initial}:{ id:uid(), attachments:[], gallery:[], reports:[] };
+    payload.companyId = presetCompanyId || val("companyId");
+    payload.name = val("name"); payload.admin = val("admin");
+    payload.createdAt = val("createdAt") || new Date().toISOString().slice(0,10);
+    payload.updatedAt = new Date().toISOString().slice(0,10);
+    payload.deadline = val("deadline");
+    payload.esg = {sosial:chk("esgS"),lingkungan:chk("esgL"),tataKelola:chk("esgT")};
+    payload.team = team;
+    onSave(payload);
+  });
+}
+
+// ---------- Project Detail (reports di dalam halaman ini) ----------
+function viewProjectDetail(companyId, projectId){
+  const c = APP.DATA.companies.find(x=>x.id===companyId);
+  const p = c?.projects?.find(x=>x.id===projectId);
+  if(!c || !p){ $("#view").innerHTML="<p>Project tidak ditemukan.</p>"; return; }
+
+  const overall = projStatusByReports(p);
+  const late = isLate(p);
+
+  $("#view").innerHTML = `
+    <nav class="text-sm text-slate-500 mb-2"><a class="hover:underline" href="#/admin">Dashboard</a> / <a class="hover:underline" href="#/admin/projects">Projects</a> / <span class="text-slate-700">${p.name}</span></nav>
+
+    <header class="card soft p-4">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-2">
+        <div>
+          <h1 class="text-xl md:text-2xl font-semibold">${p.name}</h1>
+          <p class="text-slate-600">${c.name} • Admin: <b>${p.admin||"-"}</b></p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            ${badgeStatus(overall)} ${late?'<span class="badge bg-amber-50 text-amber-700 border-amber-200">Late</span>':''}
+            ${p.esg?.sosial?'<span class="badge bg-emerald-50 text-emerald-700 border-emerald-200">Sosial</span>':'<span class="badge bg-rose-50 text-rose-700 border-rose-200">Sosial ✖</span>'}
+            ${p.esg?.lingkungan?'<span class="badge bg-emerald-50 text-emerald-700 border-emerald-200">Lingkungan</span>':'<span class="badge bg-rose-50 text-rose-700 border-rose-200">Lingkungan ✖</span>'}
+            ${p.esg?.tataKelola?'<span class="badge bg-emerald-50 text-emerald-700 border-emerald-200">Tata Kelola</span>':'<span class="badge bg-rose-50 text-rose-700 border-rose-200">Tata Kelola ✖</span>'}
+          </div>
+          <div class="text-xs text-slate-500 mt-1">Mulai ${fmt(p.createdAt)} • Update ${fmt(p.updatedAt)} • Deadline ${fmt(p.deadline)}</div>
+        </div>
+        <div class="flex gap-2">
+          <button id="btnEditProject" class="chip">Edit Project</button>
+          <button id="btnAddReport" class="chip bg-blue-600 text-white border-blue-600">+ Report</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid lg:grid-cols-3 gap-4 mt-4">
+      <section class="lg:col-span-2 card soft p-4">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold">Reports / Laporan</h2>
+          <div class="text-xs text-slate-500">${(p.reports||[]).length} items</div>
+        </div>
+        <ul id="reportList" class="mt-3 space-y-3"></ul>
+      </section>
+
+      <aside class="card soft p-4">
+        <h3 class="font-semibold">Ringkasan</h3>
+        <canvas id="projChart" class="mt-2" aria-label="chart laporan acc/ditolak/pending"></canvas>
+        <div class="mt-3 text-sm text-slate-600">
+          <div>Overall: <b>${overall}</b></div>
+          <div>Late: <b>${late? "Ya":"Tidak"}</b></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-4 mt-4">
+      <section class="card soft p-4 lg:col-span-2">
+        <h3 class="font-semibold">Tim Proyek</h3>
+        <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-2">
+          ${p.team?.map(m=>`<div class="rounded-xl border border-slate-200 p-3 flex items-center gap-3 bg-white">${avatar(m.name)}<div><div class="font-medium text-sm">${m.name}</div><div class="text-xs text-slate-600">${m.role}</div></div></div>`).join("") || `<p class="text-sm text-slate-500">Belum ada data tim.</p>`}
+        </div>
+      </section>
+      <section class="card soft p-4">
+        <h3 class="font-semibold">Dokumen</h3>
+        <ul class="mt-2 grid sm:grid-cols-2 gap-2">
+          ${(p.attachments||[]).map(f=>fileCard(f)).join("") || `<li class="text-sm text-slate-500">Belum ada dokumen.</li>`}
+        </ul>
+      </section>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-4 mt-4">
+      <section class="card soft p-4 lg:col-span-3">
+        <h3 class="font-semibold">Galeri</h3>
+        <div class="mt-2 grid md:grid-cols-3 gap-3">
+          ${p.gallery?.map(g=>`<figure class="rounded-xl border overflow-hidden bg-white"><img src="${g.url}" alt="${g.alt||'Gambar'}" class="w-full h-44 object-cover"/><figcaption class="p-2 text-xs text-slate-600">${g.alt||""}</figcaption></figure>`).join("") || `<p class="text-sm text-slate-500">Belum ada gambar.</p>`}
+        </div>
+      </section>
+    </div>
+
+    <dialog id="modalProject" class="p-0 rounded-2xl w-full max-w-3xl"></dialog>
+  `;
+
+  // draw chart
+  setTimeout(()=> drawProjectReportChart($("#projChart"), p), 0);
+
+  // render report list
+  const listEl=$("#reportList");
+  const drawReports=()=>{
+    const rs=(p.reports||[]).slice().sort((a,b)=> new Date(a.date)-new Date(b.date));
+    listEl.innerHTML = rs.map(r=>`
+      <li class="rounded-xl border border-slate-200 p-3 bg-white">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="font-medium">${r.title||"(tanpa judul)"} ${badgeStatus(r.status||"Pending")}</div>
+            <div class="text-xs text-slate-500">${fmt(r.date)}</div>
+            <p class="mt-1 text-sm text-slate-700">${r.notes||""}</p>
+            ${r.files?.length? `<ul class="mt-2 grid md:grid-cols-2 gap-2">${r.files.map(f=>fileCard(f)).join("")}</ul>`:""}
+          </div>
+          <div class="flex gap-2">
+            <button class="chip" data-edit="${r.id}">Edit</button>
+            <button class="chip text-rose-700" data-del="${r.id}">Hapus</button>
+          </div>
+        </div>
+      </li>`).join("") || `<li class="text-sm text-slate-500">Belum ada report.</li>`;
+
+    $$("#reportList [data-edit]").forEach(b=> b.onclick=()=> openReportModal(c.id, p.id, b.dataset.edit));
+    $$("#reportList [data-del]").forEach(b=> b.onclick=()=> { const i=p.reports.findIndex(x=>x.id===b.dataset.del); if(confirm("Hapus report?")){ p.reports.splice(i,1); p.updatedAt=new Date().toISOString().slice(0,10); APP.save(); APP.log("DELETE_REPORT", p.name); viewProjectDetail(c.id,p.id);} });
+  };
+  drawReports();
+
+  $("#btnAddReport").onclick=()=> openReportModal(c.id, p.id, null);
+  $("#btnEditProject").onclick=()=> openProjectEdit(c.id, p.id);
+
+  function openProjectEdit(cid,pid){
+    const dlg=$("#modalProject");
+    const comp=APP.DATA.companies.find(x=>x.id===cid);
+    const proj=JSON.parse(JSON.stringify(comp.projects.find(x=>x.id===pid)));
+    dlg.innerHTML = `<form method="dialog" class="card soft p-5">
+      <h3 class="font-semibold mb-3">Edit Project</h3>
+      ${formProject("modal", proj, comp.id)}
+      <div class="mt-4 flex justify-end gap-2">
+        <button class="chip" value="cancel">Batal</button>
+        <button id="saveProject" class="chip bg-blue-600 text-white border-blue-600">Simpan</button>
+      </div>
+    </form>`;
+    dlg.showModal();
+    bindProjectForm("modal",(payload)=>{
+      const i=comp.projects.findIndex(x=>x.id===payload.id); comp.projects[i]=payload; APP.save(); APP.log("UPDATE_PROJECT", payload.name); dlg.close(); viewProjectDetail(cid,pid);
+    }, proj, comp.id);
+  }
+
+  function openReportModal(cid, pid, rid){
+    const dlg=$("#modalProject");
+    const comp=APP.DATA.companies.find(x=>x.id===cid);
+    const proj=comp.projects.find(x=>x.id===pid);
+    const isNew=!rid;
+    const r = isNew? {id:uid(), date:new Date().toISOString().slice(0,10), title:"", status:"Pending", notes:"", files:[]} : JSON.parse(JSON.stringify(proj.reports.find(x=>x.id===rid)));
+    dlg.innerHTML = `
+      <form method="dialog" class="card soft p-5">
+        <h3 class="font-semibold mb-3">${isNew?"Tambah":"Edit"} Report — ${proj.name}</h3>
+        ${formReport("modal", r)}
+        <div class="mt-4 flex justify-end gap-2">
+          <button class="chip" value="cancel">Batal</button>
+          <button id="saveReport" class="chip bg-blue-600 text-white border-blue-600">Simpan</button>
+        </div>
+      </form>`;
+    dlg.showModal();
+    bindReportForm("modal",(payload)=>{
+      if(isNew) proj.reports.push(payload); else { const i=proj.reports.findIndex(x=>x.id===payload.id); proj.reports[i]=payload; }
+      // lampiran tambahan ikut masuk ke daftar dokumen project
+      payload.files?.forEach(f=> (proj.attachments ||= []).push({name:f.name,url:f.url,type:(f.name.split(".").pop()||"file"),size:""}));
+      proj.updatedAt = new Date().toISOString().slice(0,10);
+      APP.save(); APP.log(isNew?"CREATE_REPORT":"UPDATE_REPORT", payload.title);
+      dlg.close(); viewProjectDetail(cid,pid);
+    }, r);
+  }
+}
+function fileCard(f){
+  const ext=(f.type || f.name.split(".").pop()||"").toLowerCase();
+  const color=ext==="pdf"?"text-rose-600":ext==="xlsx"?"text-emerald-600":"text-blue-600";
+  const label=ext.toUpperCase();
+  return `<li class="rounded-xl border border-slate-200 p-3 flex items-center gap-3 bg-white">
+    <span class="inline-flex items-center justify-center size-10 rounded-lg border border-slate-200 ${color}">
+      <svg xmlns="http://www.w3.org/2000/svg" class="size-6" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+    </span>
+    <div class="min-w-0"><div class="text-sm font-medium truncate">${f.name}</div><div class="text-xs text-slate-500">${label}${f.size?` • ${f.size}`:""}</div></div>
+    <a href="${f.url}" class="ml-auto inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs hover:bg-slate-50">Lihat<svg class="size-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="m13 5 7 7-7 7v-4H4v-6h9z"/></svg></a>
+  </li>`;
+}
+function formReport(idPrefix, r={}){
+  return `
+  <div id="reportForm-${idPrefix}" class="grid grid-cols-6 gap-3">
+    <label class="col-span-2 text-sm">Tanggal
+      <input data-f="date" type="date" class="w-full rounded-lg border px-3 py-2" value="${r.date||""}">
+    </label>
+    <label class="col-span-3 text-sm">Judul
+      <input data-f="title" class="w-full rounded-lg border px-3 py-2" value="${r.title||""}">
+    </label>
+    <label class="col-span-1 text-sm">Status (info)
+      <select data-f="status" class="w-full rounded-lg border px-3 py-2">
+        ${["Pending","ACC","Ditolak"].map(s=>`<option ${r.status===s?"selected":""}>${s}</option>`).join("")}
+      </select>
+    </label>
+    <label class="col-span-6 text-sm">Catatan
+      <textarea data-f="notes" rows="3" class="w-full rounded-lg border px-3 py-2">${r.notes||""}</textarea>
+    </label>
+    <div class="col-span-6">
+      <div class="font-medium text-sm">Files / Lampiran</div>
+      <div id="fileWrap-${idPrefix}" class="mt-2 space-y-2"></div>
+      <button type="button" id="btnAddFile-${idPrefix}" class="chip mt-1">+ File</button>
+    </div>
+  </div>`;
+}
+function bindReportForm(idPrefix, onSave, initial={}){
+  const root=$(`#reportForm-${idPrefix}`); if(!root) return;
+  const files = JSON.parse(JSON.stringify(initial.files||[]));
+  const fileWrap=$(`#fileWrap-${idPrefix}`);
+  function drawFiles(){
+    fileWrap.innerHTML = files.map((f,i)=>`
+      <div class="grid grid-cols-12 gap-2 items-center">
+        <input class="col-span-5 rounded-lg border px-2 py-1" placeholder="Nama file" value="${f.name||""}" data-i="${i}" data-k="name">
+        <input class="col-span-6 rounded-lg border px-2 py-1" placeholder="URL (http/https/data:)" value="${f.url||"#"}" data-i="${i}" data-k="url">
+        <button class="col-span-1 chip text-rose-700" data-del="${i}">x</button>
+      </div>
+    `).join("") || `<div class="text-xs text-slate-500">Belum ada file.</div>`;
+    $$("#fileWrap-"+idPrefix+" [data-i]").forEach(inp=> inp.oninput=(e)=>{ files[+inp.dataset.i][inp.dataset.k]=e.target.value; });
+    $$("#fileWrap-"+idPrefix+" [data-del]").forEach(b=> b.onclick=()=>{ files.splice(+b.dataset.del,1); drawFiles(); });
+  }
+  drawFiles();
+  $(`#btnAddFile-${idPrefix}`).onclick=()=>{ files.push({name:"",url:"#"}); drawFiles(); };
+
+  $("#saveReport")?.addEventListener("click",(e)=>{ e.preventDefault();
+    const val=(k)=> root.querySelector(`[data-f="${k}"]`)?.value || "";
+    const payload = initial?.id? {...initial}:{ id:uid() };
+    payload.date = val("date")|| new Date().toISOString().slice(0,10);
+    payload.title = val("title"); payload.status=val("status")||"Pending"; payload.notes = val("notes");
+    payload.files = files;
+    onSave(payload);
+  });
+}
+
+// ---------- Import / Export ----------
+function viewImportExport(){
+  $("#view").innerHTML = `
+    <div class="grid lg:grid-cols-2 gap-4">
+      <section class="card soft p-5">
+        <h3 class="font-semibold">Export JSON</h3>
+        <p class="text-sm text-slate-600 mt-1">Unduh semua data (companies, projects, reports) dalam format JSON.</p>
+        <button id="btnExport" class="mt-3 rounded-lg bg-blue-600 text-white px-4 py-2">Download</button>
+      </section>
+      <section class="card soft p-5">
+        <h3 class="font-semibold">Import JSON</h3>
+        <p class="text-sm text-slate-600 mt-1">Impor file JSON sesuai skema demo.</p>
+        <label class="mt-3 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 cursor-pointer">
+          <input id="fileImport" type="file" accept=".json,application/json" class="sr-only"> <span>Pilih File JSON</span>
+        </label>
+      </section>
+      <section class="card soft p-5 lg:col-span-2">
+        <h3 class="font-semibold">Bulk Upload CSV (Companies)</h3>
+        <p class="text-sm text-slate-600 mt-1">Format: <code>name,sector,location</code> per baris.</p>
+        <textarea id="csvText" rows="6" class="w-full rounded-lg border px-3 py-2 mt-2" placeholder="PT Zeta, Teknologi, Jakarta&#10;PT Omega, Logistik, Semarang"></textarea>
+        <div class="mt-2 flex gap-2">
+          <button id="btnParseCSV" class="chip bg-blue-600 text-white border-blue-600">Import</button>
+          <button id="btnClearAll" class="chip text-rose-700">Reset Demo Data</button>
+        </div>
+      </section>
+    </div>
+  `;
+  $("#btnExport").onclick=()=>{ const blob=new Blob([JSON.stringify(APP.DATA,null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="esg-data.json"; a.click(); URL.revokeObjectURL(a.href); };
+  $("#fileImport").onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const parsed=JSON.parse(r.result); if(!parsed||!Array.isArray(parsed.companies)) throw new Error("Struktur tidak valid"); APP.DATA=parsed; APP.save(); alert("Import sukses."); location.hash="#/admin"; }catch(err){ alert("Gagal import: "+err.message); } }; r.readAsText(f); };
+  $("#btnParseCSV").onclick=()=>{ const text=$("#csvText").value.trim(); if(!text) return; const rows=csvToArray(text); rows.forEach(r=>{ const [name,sector,location]=r; APP.DATA.companies.push({id:uid(),name,sector,location,quality:{employees:70,company:70},projects:[]});}); APP.save(); APP.log("BULK_IMPORT_COMPANY", rows.length+" rows"); alert("Import "+rows.length+" company."); };
+  $("#btnClearAll").onclick=()=>{ if(confirm("Reset data demo?")){ localStorage.removeItem("ESG_DATA"); location.reload(); } };
+}
+
+// ---------- Settings ----------
+function viewSettings(){
+  $("#view").innerHTML = `
+    <section class="card soft p-5 max-w-2xl">
+      <h3 class="font-semibold">Settings</h3>
+      <p class="text-sm text-slate-600 mt-1">Pengaturan ringkas (contoh).</p>
+      <label class="block text-sm mt-3">Brand Name
+        <input id="brandName" class="w-full rounded-lg border px-3 py-2" value="ESG Admin">
+      </label>
+      <button id="saveSettings" class="mt-3 rounded-lg bg-blue-600 text-white px-4 py-2">Simpan</button>
+    </section>
+  `;
+  $("#saveSettings").onclick=()=> alert("Contoh saja: biasanya disimpan ke server.");
+}
+</script>
+
+<!-- ================ INIT ================ -->
+<script>
+function viewHomeFallback(){ viewDashboard(); }
+router();
+</script>
+</body>
+</html>
